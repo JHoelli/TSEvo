@@ -5,7 +5,7 @@ pip install -r requirements.txt
 ```
 
 # Usage
-Entry point to TSEvo is the calls ```CounterfactualExplanation.py```. 
+Entry point to TSEvo is ```CounterfactualExplanation.py```. 
 ```python
 from CounterfactualExplanation import Explanation
 
