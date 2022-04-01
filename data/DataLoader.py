@@ -3,7 +3,7 @@ import os
 import numpy as np 
 from tslearn.datasets import UCR_UEA_datasets
 
-def load_UCR_dataset(dataset,path='/media/jacqueline/Data/UCRArchive_2018/'): # path='./Data/UCRArchive_2018'
+def load_UCR_dataset(dataset,path='./data'): # path='./Data/UCRArchive_2018'
     ''' 
     Loads and formats UCR Dataset from specified Path
 
