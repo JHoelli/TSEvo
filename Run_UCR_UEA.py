@@ -1,5 +1,3 @@
-'''Run TSEvo for the first 20 items of the listed datasets'''
-
 from evaluation.metrics import redundancy, yNN 
 from cProfile import label
 from datetime import datetime
@@ -12,7 +10,7 @@ from pathlib import Path
 import platform
 import sklearn
 import torch
-from models.CNN_TSNet import UCRDataset, train
+from models.CNN_TSNet import UCRDataset
 from models.ResNet import ResNetBaseline, fit, get_all_preds
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -22,39 +20,36 @@ from models.ResNet import ResNetBaseline, get_all_preds
 from CounterfactualExplanation import Explanation
 import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
+from data.DataLoader import load_UCR_dataset
 from tslearn.datasets import UCR_UEA_datasets
-from data.DataLoader import load_UEA_dataset
 
-
-run_on = ['Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
-draw_plot=False
+run_on = ['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+draw_plot=True
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
-mutation_type=['frequency_band_mapping','authentic_opposing_information','mutate_mean','mutate_both']
+mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both']
 
 for dataset in run_on: 
     '''Get Data'''
-    train_x,train_y, test_x, test_y=load_UEA_dataset(dataset)
-
+    X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
+    test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
     test_y=enc1.transform(test_y.reshape(-1,1))
     n_classes = test_y.shape[1]
-    print(n_classes)
 
 
     '''Load Model'''
-    model = ResNetBaseline(in_channels=train_x.shape[-2], num_pred_classes=n_classes)
+    model = ResNetBaseline(in_channels=X_train.shape[-1], num_pred_classes=n_classes)
     model.load_state_dict(torch.load(f'./models/{dataset}/ResNet'))
 
     '''Run Algo'''
     exp =Explanation(model= model,data=(test_x,np.argmax(test_y,axis=-1)),backend='torch')
-
     ynn=[]
     ynn_timeseries=[]
     red=[]
     sal_01=[]
-    sal_02=[]
-
+    sal_02=[] 
     max_iteration=len(test_y)
     for mut in mutation_type:
         if mut in os.listdir('./Results/'):
@@ -68,12 +63,12 @@ for dataset in run_on:
         for i, item in enumerate(test_x):
             print(f'Dataset {dataset} Iteration {i}/{max_iteration}')
             observation_01=item
-            label_01=np.array([test_y[i]])
+            label_01=np.array([test_y[i]])#test_y[0]
             print(label_01)
             start_time=datetime.now()
             pop,logbook=exp.explain_instance(observation_01,label_01,transformer=mut)
             end_time=datetime.now()
-  
+
             
             mlmodel = model 
             counterfactuals = pop
@@ -86,6 +81,9 @@ for dataset in run_on:
             ynn.append(yNN(counterfactuals, mlmodel,train_x,5)[0][0])
             ynn_timeseries.append(yNN_timeseries(counterfactuals, mlmodel,train_x,5)[0][0])
             red.append(redundancy(original, counterfactuals, mlmodel)[0])
+            sal_01.append(np.count_nonzero(np.abs(observation_01.reshape(-1)-np.array(pop)[0][0].reshape(-1)).reshape(1,-1)))
+
+            # Closest from opprosite class
 
             data= test_x[np.argmax(test_y,axis=1) != np.argmax(label_01,axis= 1) ]
             l= test_y[np.argmax(test_y,axis=1) != np.argmax(label_01,axis= 1)]
@@ -100,7 +98,7 @@ for dataset in run_on:
                     timeline_max= timeline
                     i_max=j
                 j = j+1
-        
+            sal_02.append(np.count_nonzero(np.abs(timeline_max.reshape(-1)-np.array(pop)[0][0].reshape(-1)).reshape(1,-1)))
 
             if draw_plot:
                 plot_CF(pop,path=f'./Results/{mut}/{dataset}/Only_CF_{i}.png')
@@ -116,6 +114,6 @@ for dataset in run_on:
         results['ynn']=ynn
         results['ynn_timeseries']=ynn_timeseries
         results['red']=red
-
+        results['sparsity']=sal_01
+        results['closest']=sal_02
         results.to_csv(f'./Results/{mut}/{dataset}/Metrics.csv')
-

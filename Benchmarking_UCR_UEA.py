@@ -26,6 +26,8 @@ from evaluation.Instance_BasedCF_NativeGuide import NativeGuidCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 from data.DataLoader import load_UCR_dataset
+from tslearn.datasets import UCR_UEA_datasets
+
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
@@ -45,20 +47,22 @@ for dataset in run_on:
             pass
         else:
             os.mkdir(f'./Results/{dataset}')
-    
-    train_y, train_x, test_y, test_x=load_UCR_dataset(dataset) 
+    X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
+    test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2]) 
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
     test_y=enc1.transform(test_y.reshape(-1,1))
     n_classes = test_y.shape[1]
     if len(train_x.shape)==2:
-        train_x=train_x.reshape(-1,1,train_x.shape[-1])
-        test_x=test_x.reshape(-1,1,train_x.shape[-1])
+        train_x=train_x.reshape(-1,train_x.shape[-2],train_x.shape[-1])
+        test_x=test_x.reshape(-1,train_x.shape[-2],train_x.shape[-1])
     '''Load Model'''
-    model = ResNetBaseline(in_channels=1, num_pred_classes=n_classes)
+    model = ResNetBaseline(in_channels=train_x.shape[-2], num_pred_classes=n_classes)
     model.load_state_dict(torch.load(f'./models/{dataset}/ResNet'))
     model.eval()
 
-    '''Explanation Method'''    
+    '''Explanation Method'''
+    #TODO Use new Method !     
     nguide_cf=NativeGuidCF(model,np.array(train_x)[0].shape)
 
     '''Calculate'''
@@ -90,6 +94,7 @@ for dataset in run_on:
     ib_cf=[]
     not_valid_ib=0
     max_iteration=len(test_y)
+    #TODO add time Measure
     for i, item in enumerate(test_x):
         print('Image Number ',{i})
         observation_01=item
