@@ -1,5 +1,3 @@
-# take a random neighbor
-#from curses import window
 from re import X
 import numpy as np
 import random
@@ -9,6 +7,8 @@ from deap import creator, base, algorithms, tools
 import time
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 from scipy.fft import fft, ifft, fftfreq, rfft, irfft, rfftfreq
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
 def eval(x, mop, return_values_of):
     '''
@@ -384,10 +384,13 @@ def mutate_mean(ind1,reference_set):
 def mutate_both (ind1,reference_set):
     '''Still TODO '''
     if ind1.mutation == 'auth':
+        #print('Authentication Called')
         ind1, = authentic_opposing_information(ind1, reference_set)
     elif ind1.mutation == 'freq':
+        #print('Frequency Called')
         ind1, = frequency_band_mapping(ind1, reference_set)
     if ind1.mutation == 'mean':
+        #print('Mean Called')
         means = reference_set.mean(axis=0) #TODO used to be one
         #print(means.shape)
         sigmas = reference_set.std(axis=0) #TODO used to be one

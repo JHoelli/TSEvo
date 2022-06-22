@@ -29,12 +29,12 @@ class MultiObjectiveCounterfactuals(Problem):
         self.neighborhood = neighborhood
         self.backend=backend
         
-        if self.backend =='torch': 
+        if self.backend =='PYT': 
             self.model.eval()
         #print(type(original_y))
         if type(original_y)==np.int64 or original_y.shape[1]==2 :
             print('Binary Case')
-            if self.backend =='torch':
+            if self.backend =='PYT':
                 print('Predict Torch')
                 self.predict= self.get_prediction_torch
             if self.backend =='tf':
@@ -43,14 +43,14 @@ class MultiObjectiveCounterfactuals(Problem):
             self.output_distance = self.output_distance_binary
         elif self.target== None:
             print('No Target')
-            if self.backend =='torch':
+            if self.backend =='PYT':
                 self.predict= self.get_prediction_torch
             if self.backend =='tf':
                 self.predict= self.get_prediction_tensorflow
             self.output_distance = self.output_distance_multi
         else: 
             print('Target')
-            if self.backend =='torch':
+            if self.backend =='PYT':
                 self.predict= self.get_prediction_torch
             if self.backend =='tf':
                 self.predict= self.get_prediction_tensorflow

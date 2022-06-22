@@ -1,19 +1,21 @@
 from mimetypes import init
 from pyexpat import model
+from tabnanny import verbose
 from unittest import mock
-from EvoUtils import recombine,eval, mutate, create_logbook, create_mstats, evaluate_pop,pareto_eq,authentic_opposing_information
-import EvoUtils as EvoUtils
+from TSEvo.EvoUtils import recombine,eval, mutate, create_logbook, create_mstats, evaluate_pop,pareto_eq,authentic_opposing_information
+import TSEvo.EvoUtils as EvoUtils
 from deap import creator, base, algorithms, tools
 import time
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 import numpy as np 
 import pickle
 import random
-from Problem import MultiObjectiveCounterfactuals
+from TSEvo.Problem import MultiObjectiveCounterfactuals
 log = False
+
 MUT_TYPES=['freq','auth','mean']
 class EvolutionaryOptimization():
-    def __init__(self,model, observation_x,original_y,target_y,reference_set, neighborhood, window,channels, backend,transformer = 'authentic_opposing_information'):
+    def __init__(self,model, observation_x,original_y,target_y,reference_set, neighborhood, window,channels, backend,transformer = 'authentic_opposing_information',verbose=0):
         '''
         Initialization of Optimization Algorithm
         Args:
@@ -42,7 +44,7 @@ class EvolutionaryOptimization():
         self.MUTPB = 0.6#0.6
         #print('Create MOP')
         #self.neighborhood=neighborhood
-        
+        self.verbose=verbose
         self.mop = MultiObjectiveCounterfactuals(model, observation_x, original_y, target_y, reference_set, neighborhood,window, backend,channels)
         #print('Finished Create MOP')
         """Create types"""
@@ -140,7 +142,8 @@ class EvolutionaryOptimization():
             logbook.record(gen=gen, evals=len(pop), **record)
             hof.update(pop)
             best.update(pop)
-            print(logbook.stream)
+            if self.verbose !=0:
+                print(logbook.stream)
             gen = gen + 1
        
         for item in best:
@@ -148,5 +151,6 @@ class EvolutionaryOptimization():
             item.output=output 
         
         return best, logbook
+
 
     

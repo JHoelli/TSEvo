@@ -1,13 +1,13 @@
 # TSEvo: Counterfactuals for Time Series Classification 
 # Installation
 ```
-pip install -r requirements.txt
+pip install .
 ```
 
 # Usage
 Entry point to TSEvo is ```CounterfactualExplanation.py```. 
 ```python
-from CounterfactualExplanation import Explanation
+from TSEvo.CounterfactualExplanation import Explanation
 
 model = # Your ML Model returning a probability distribution
 data = #Additionally available in structure (x,y) 
