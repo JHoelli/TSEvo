@@ -3,27 +3,18 @@ from cProfile import label
 from datetime import datetime
 import pandas as pd
 import os
-from evaluation.Plots import plot_basic_dataset
 from evaluation.metrics import yNN_timeseries
 import numpy as np
-from pathlib import Path
 import platform
-import sklearn
 import torch
-from models.CNN_TSNet import UCRDataset
-from models.ResNet import ResNetBaseline, fit, get_all_preds
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 import numpy as np
 from models.ResNet import ResNetBaseline, get_all_preds
-from CounterfactualExplanation import Explanation
+from TSEvo.CounterfactualExplanation import Explanation
 import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
-from data.DataLoader import load_UCR_dataset
 from tslearn.datasets import UCR_UEA_datasets
 
-run_on = ['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+run_on = ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 draw_plot=True
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
@@ -37,14 +28,17 @@ for dataset in run_on:
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
     test_y=enc1.transform(test_y.reshape(-1,1))
     n_classes = test_y.shape[1]
-
+    print(X_train.shape[-1])
+    print(n_classes)
 
     '''Load Model'''
     model = ResNetBaseline(in_channels=X_train.shape[-1], num_pred_classes=n_classes)
     model.load_state_dict(torch.load(f'./models/{dataset}/ResNet'))
-
+    model.eval()
+    print(test_x.shape)
+    y_pred= model(torch.from_numpy(test_x).float()).detach().numpy()
     '''Run Algo'''
-    exp =Explanation(model= model,data=(test_x,np.argmax(test_y,axis=-1)),backend='torch')
+    exp =Explanation(model= model,data=(test_x,np.argmax(y_pred,axis=-1)),backend='PYT',verbose=2)
     ynn=[]
     ynn_timeseries=[]
     red=[]
@@ -63,10 +57,10 @@ for dataset in run_on:
         for i, item in enumerate(test_x):
             print(f'Dataset {dataset} Iteration {i}/{max_iteration}')
             observation_01=item
-            label_01=np.array([test_y[i]])#test_y[0]
+            label_01=np.array([y_pred[i]])#test_y[0]
             print(label_01)
             start_time=datetime.now()
-            pop,logbook=exp.explain_instance(observation_01,label_01,transformer=mut)
+            pop,logbook, window, mutation=exp.explain_instance(observation_01,label_01,transformer=mut)
             end_time=datetime.now()
 
             
@@ -75,6 +69,9 @@ for dataset in run_on:
             pickle.dump(end_time-start_time,open( f'./Results/{mut}/{dataset}/Time_{i}.pkl', "wb" ) )
             pickle.dump( counterfactuals, open( f'./Results/{mut}/{dataset}/Counterfactuals_{i}.pkl', "wb" ) )
             pickle.dump( logbook, open( f'./Results/{mut}/{dataset}/Logbook_{i}.pkl', "wb" ) )
+            pickle.dump(window,open( f'./Results/{mut}/{dataset}/Window_{i}.pkl', "wb" ))
+            if mut == 'mutate_both':
+                pickle.dump(mutation,open( f'./Results/{mut}/{dataset}/Mut_{i}.pkl', "wb" ))
 
             
             original = observation_01 
@@ -85,8 +82,8 @@ for dataset in run_on:
 
             # Closest from opprosite class
 
-            data= test_x[np.argmax(test_y,axis=1) != np.argmax(label_01,axis= 1) ]
-            l= test_y[np.argmax(test_y,axis=1) != np.argmax(label_01,axis= 1)]
+            data= test_x[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1) ]
+            l= y_pred[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1)]
             timeline_max=[]
             mi_max=5
             j= 0

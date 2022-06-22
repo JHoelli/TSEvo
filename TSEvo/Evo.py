@@ -54,6 +54,8 @@ class EvolutionaryOptimization():
             creator.create("Individual", list, fitness=creator.FitnessMin,window=np.random.randint(1,0.5 * np.array(observation_x).reshape(-1).shape[0]),channels=np.ones(channels),mutation = None)
         else:
             creator.create("Individual", list, fitness=creator.FitnessMin,window=np.random.randint(1,0.5 * np.array(observation_x).reshape(channels,-1).shape[1]),channels=np.ones(channels),mutation=None)
+            if self.verbose == 1:
+                self.verbose=2
         self.toolbox = base.Toolbox()
         def init_pop():
             #TODO Überprüfung ob length =1 wenn length = 1 ist --> manipulate neighborhood
@@ -89,6 +91,8 @@ class EvolutionaryOptimization():
             [deap.Individual, deap.logbook]: Return the Best Individual and Logbook Info.'''
       
         pop = self.toolbox.population(n=self.MU)
+        window=[]
+        mutation = []
         for ind in pop: 
             ind.window = np.random.randint(1,0.5 * np.array(ind).shape[1])
             ind.mutation=random.choice(MUT_TYPES)
@@ -145,10 +149,33 @@ class EvolutionaryOptimization():
             if self.verbose !=0:
                 print(logbook.stream)
             gen = gen + 1
+
+            if self.verbose ==2 and pop[0].mutation !=None : 
+                mean= 0
+                freq=0
+                auth=0
+                for ind in pop:
+                    if ind.mutation == 'freq':
+                        freq+=1
+                    elif ind.mutation == 'auth':
+                        auth+=1
+                    elif ind.mutation == 'mean':
+                        mean+=1
+                mutation.append([freq,auth,mean])
+            if self.verbose ==2:
+                add=[]
+                for ind in pop:
+                    add.append(ind.window)
+                window.append([np.mean(add), np.std(add)])
+
+
        
         for item in best:
             label, output=self.mop.predict(np.array([item]), full=True)
             item.output=output 
+            
+        if self.verbose==2:
+            return best, logbook, window, mutation
         
         return best, logbook
 

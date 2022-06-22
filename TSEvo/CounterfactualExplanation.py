@@ -68,8 +68,7 @@ class Explanation():
         window= original_x.shape[-1]
         channels = original_x.shape[-2]
         e=EvolutionaryOptimization(self.model, original_x,original_y,target_y,reference_set, neighborhood, window,channels, self.backend,transformer,verbose=self.verbose)
-        pop,logbook =e.run()
-        return pop,logbook
+        return e.run()
 
     def explain(self,original_x,original_y, target_y= None):
         explanation = []
