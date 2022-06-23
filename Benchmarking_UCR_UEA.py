@@ -60,7 +60,9 @@ for dataset in run_on:
     model = ResNetBaseline(in_channels=train_x.shape[-2], num_pred_classes=n_classes)
     model.load_state_dict(torch.load(f'./models/{dataset}/ResNet'))
     model.eval()
-
+    
+    y_pred= model(torch.from_numpy(test_x).float()).detach().numpy()
+    test_y=y_pred
     '''Explanation Method'''
     #TODO Use new Method !     
     nguide_cf=NativeGuidCF(model,np.array(train_x)[0].shape)
