@@ -88,6 +88,9 @@ class MultiObjectiveCounterfactuals(Problem):
     def mean_delta(self, first, second):
         return np.sum(np.abs(first - second)) / (first.shape[-1]*first.shape[-2])
     
+ 
+
+    
     def get_prediction_torch(self, individual, full =False,):
 
         individual = np.array(individual.tolist(), dtype=np.float64)

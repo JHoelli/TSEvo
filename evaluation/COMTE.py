@@ -31,13 +31,6 @@ import six
 import sys
 sys.modules['sklearn.externals.six'] = six
 import mlrose
-from TSInterpret.InterpretabilityModels.InterpretabilityBase import InterpretabilityBase
-from TSInterpret.InterpretabilityModels.counterfactual.CF import CF
-#from InterpretabilityModels.utils import torch_wrapper, tensorflow_wrapper,sklearn_wrapper
-from TSInterpret.Models.PyTorchModel import PyTorchModel
-from TSInterpret.Models.TensorflowModel import TensorFlowModel
-from TSInterpret.Models.SklearnModel import SklearnModel
-
 
 class BaseExplanation:
     def __init__(self, clf, timeseries, labels, silent=True,
@@ -538,9 +531,17 @@ class AtesCF():
         self.model= model
         test_x,test_y=ref
         shape=test_x.shape
-        self.predict=self.model.predict
+        self.predict=self.get_prediction_torch
         self.referenceset=(test_x,test_y)
-         
+        
+    def get_prediction_torch(self, individual):
+        individual = np.array(individual.tolist(), dtype=np.float64)
+        input_ = torch.from_numpy(individual).float()#.reshape(1,-1,self.window)
+  
+        with torch.no_grad():
+            output = torch.nn.functional.softmax(self.model(input_)).detach().numpy()
+
+        return output
 
     def explain(self, x: np.ndarray,orig_class:int=None, target: int=None, method= 'opt')-> Tuple[np.array, int]:
         '''

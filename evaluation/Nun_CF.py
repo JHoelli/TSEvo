@@ -1,3 +1,27 @@
+'''Implementation after Delaney et al . https://github.com/e-delaney/Instance-Based_CFE_TSC'''
+from cProfile import label
+from itertools import count
+from operator import sub
+from tslearn.neighbors import KNeighborsTimeSeries
+from torchcam.methods import SmoothGradCAMpp, GradCAM
+from tf_explain.core.grad_cam import GradCAM
+from tf_explain.core.vanilla_gradients import VanillaGradients
+from torchcam.methods import CAM
+import numpy as np 
+from pathlib import Path
+import platform
+import os 
+import pandas as pd
+import numpy as np
+import numpy as np
+import pickle
+import torch
+import matplotlib.pyplot as plt 
+import seaborn as sns 
+import warnings
+import tensorflow as tf
+from tslearn.barycenters import dtw_barycenter_averaging
+from typing import Tuple
 class NativeGuideCF():
     '''
     NUN_CF according to [1] for both torch and tensorflow. 
@@ -20,13 +44,16 @@ class NativeGuideCF():
         self.model= model
         test_x,test_y=reference_set
         test_x=np.array(test_x,dtype=np.float32)
+        self.ts_length=test_x.shape[-1]
+        self.backend='PYT'
             
         try:
             self.cam_extractor =CAM(self.model,input_shape=(shape[1],shape[2]) )
         except:
             print('GradCam Hook already registered')
             change=False
-        self.predict=self.model.predict
+        #TODO
+        self.predict=self.get_prediction_torch
         y_pred = np.argmax(self.predict(test_x), axis=1)
         self.reference_set=(test_x,y_pred)
         #Manipulate reference set replace original y with predicted y 
@@ -62,6 +89,15 @@ class NativeGuideCF():
         individual = np.array(nun.tolist(), dtype=np.float64)
         out=self.predict(individual)
         return nun,np.argmax(out)
+
+    def get_prediction_torch(self, individual):
+        individual = np.array(individual.tolist(), dtype=np.float64)
+        input_ = torch.from_numpy(individual).float()#.reshape(1,-1,self.window)
+  
+        with torch.no_grad():
+            output = torch.nn.functional.softmax(self.model(input_)).detach().numpy()
+
+        return output
 
     def _findSubarray(self, a, k): #used to find the maximum contigious subarray of length k in the explanation weight vector
     

@@ -1,6 +1,7 @@
 import datetime
 from typing import List, Optional
-
+#TODO https://github.com/e-delaney/Instance-Based_CFE_TSC/blob/main/W-CF/Wachter_Counterfactuals_Multiclass_CBF.ipynb
+#TODO is this working correctly
 import numpy as np
 import torch
 import torch.optim as optim
@@ -86,4 +87,4 @@ def wachter_recourse(  torch_model,   x: np.ndarray,  y_target: List[int],  lr: 
             return None
         elif f_x_new[0][y_target] >= 0.5:
             print("Counterfactual Explanation Found")
-    return x_new_enc.cpu().detach().numpy().squeeze(axis=0)
+    return x_new_enc.cpu().detach().numpy().squeeze(axis=0), np.argmax(f_x_new)

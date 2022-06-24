@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import torch
 from models.ResNet import ResNetBaseline
-from data.DataLoader import load_UCR_dataset,load_UEA_dataset
+from tslearn.datasets import UCR_UEA_datasets
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
@@ -262,13 +262,15 @@ def make_table_split():
 def build_figure(k=0):
     j=1
     #k=0
-    for dataset in ['CBF','Coffee','ECG5000','ElectricDevices','FordA','GunPoint']:#os.listdir('./Benchmarking'):
+    for dataset in ['GunPoint']:#os.listdir('./Benchmarking'):#'CBF','Coffee','ECG5000','ElectricDevices','FordA',
         
         mi=5
         ma=-5
-
-        test = pd.read_csv(os.path.abspath(f'/media/jacqueline/Data/UCRArchive_2018/{dataset}/{dataset}_TEST.tsv'), sep='\t', header=None)
-        test_y, test_x = test.loc[:, 0].apply(lambda x: x-1).to_numpy(), test.loc[:, 1:].to_numpy()
+        X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+        train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
+        test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2]) 
+        #test = pd.read_csv(os.path.abspath(f'/media/jacqueline/Data/UCRArchive_2018/{dataset}/{dataset}_TEST.tsv'), sep='\t', header=None)
+        #test_y, test_x = test.loc[:, 0].apply(lambda x: x-1).to_numpy(), test.loc[:, 1:].to_numpy()
         original=test_x[k]
         model = ResNetBaseline(in_channels=1, num_pred_classes=len(np.unique(test_y)))
         model.load_state_dict(torch.load(f'./models/{dataset}/ResNet'))
@@ -345,11 +347,12 @@ def build_figure(k=0):
         
         
 
-        
-        if mi> np.min(original,axis=0):
-            mi=np.min(original,axis=0)
-        if ma<np.max(original,axis=0):
-            ma=np.max(original,axis=0)
+        print('MI',mi)
+        print(np.min(original.reshape(-1),axis=0))
+        if mi> np.min(original.reshape(-1),axis=0):
+            mi=np.min(original.reshape(-1),axis=0)
+        if ma<np.max(original.reshape(-1),axis=0):
+            ma=np.max(original.reshape(-1),axis=0)
         #print(mi)
         #print(ma)
         mi =mi -0.2

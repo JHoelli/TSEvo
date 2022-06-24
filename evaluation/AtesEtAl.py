@@ -83,7 +83,14 @@ class BaseExplanation:
     #            idx = np.random.randint(len(result), size=sample)
     #            result = result[idx, :]
     #        return result
+    def get_prediction_torch(self, individual):
+        individual = np.array(individual.tolist(), dtype=np.float64)
+        input_ = torch.from_numpy(individual).float()#.reshape(1,-1,self.window)
+  
+        with torch.no_grad():
+            output = torch.nn.functional.softmax(self.model(input_)).detach().numpy()
 
+        return output
     def _plot_changed(self, metric, original, distractor, savefig=False):
         fig = plt.figure(figsize=(6,3))
         ax = fig.gca()
