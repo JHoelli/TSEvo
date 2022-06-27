@@ -14,7 +14,7 @@ import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 
-run_on = ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+run_on =['CharacterTrajectories','MotorImagery']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
 mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both']
@@ -22,6 +22,8 @@ mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate
 for dataset in run_on: 
     '''Get Data'''
     X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+    X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
     train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))

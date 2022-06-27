@@ -535,72 +535,98 @@ def plot_dis(k):
     plt.tight_layout()
         #plt.savefig('myimage.svg', format='svg', dpi=1200)
     plt.show()
-    plt.close()
+    #plt.close()
     #plt.show()
     #plt.close()
 
-def calculate_validity():
-    data = []
-    wachter=[]
-    ib=[]
-    cfg=[]
-    ates=[]
-    for file in os.listdir('./Results/Benchmarking'):      
-        if not file.endswith('.csv') and not file.endswith('.png') and file != '.':
-            if 'ates_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
-                w=pickle.load(open(f'./Results/Benchmarking/{file}/ates_cf.pkl','rb'))
-                da= []
-                for a in w: 
-                    if a is None:
-                        pass
-                    else:
-                        da.append(a)
-                    print(a)
-                ates.append(len(w))
-            if 'ib_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
-                w=pickle.load(open(f'./Results/Benchmarking/{file}/ib_cf.pkl','rb'))
-                da= []
-                for a in w: 
-                    if a is None:
-                        pass
-                    else:
-                        da.append(a)
-                #print(da)
-                ib.append(len(da))
-            if 'cfg_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
-                w=pickle.load(open(f'./Results/Benchmarking/{file}/cfg_cf.pkl','rb'))
-                da= []
-                for a in w: 
-                    if a is None:
-                        pass
-                    else:
-                        da.append(a)
-                #print(da)
+#def calculate_validity():
+#    data = []
+#    wachter=[]
+#    ib=[]
+#    cfg=[]
+#    ates=[]
+#    for file in os.listdir('./Results/Benchmarking'):      
+#        if not file.endswith('.csv') and not file.endswith('.png') and file != '.':
+#            if 'ates_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
+#                w=pickle.load(open(f'./Results/Benchmarking/{file}/ates_cf.pkl','rb'))
+#                da= []
+#                for a in w: 
+#                    if a is None:
+#                        pass
+#                    else:
+#                        da.append(a)
+#                    print(a)
+#                ates.append(len(w))
+#            if 'ib_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
+#                w=pickle.load(open(f'./Results/Benchmarking/{file}/ib_cf.pkl','rb'))
+#                da= []
+#                for a in w: 
+#                    if a is None:
+#                        pass
+#                    else:
+#                        da.append(a)
+#                #print(da)
+#                ib.append(len(da))
+#            if 'cfg_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
+#                w=pickle.load(open(f'./Results/Benchmarking/{file}/cfg_cf.pkl','rb'))
+#                da= []
+#                for a in w: 
+#                    if a is None:
+#                        pass
+#                    else:
+#                        da.append(a)
+#                #print(da)
 
-                cfg.append(len(da))
-            if 'Wachter_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
-                w=pickle.load(open(f'./Results/Benchmarking/{file}/Wachter_cf.pkl','rb'))
-                da= []
-                for a in w: 
-                    if a is None:
-                        pass
-                    else:
-                        da.append(a)
-                #print(da)
-                wachter.append(len(da))
-    print(ates)
-    print(ib)
-    print(cfg)
-    print(wachter)
+#                cfg.append(len(da))
+#            if 'Wachter_cf.pkl'in os.listdir(f'./Results/Benchmarking/{file}'):
+#                w=pickle.load(open(f'./Results/Benchmarking/{file}/Wachter_cf.pkl','rb'))
+#                da= []
+#                for a in w: 
+#                    if a is None:
+#                        pass
+#                    else:
+#                        da.append(a)
+#                #print(da)
+#                wachter.append(len(da))
+#    print(ates)
+#    print(ib)
+#    print(cfg)
+#    print(wachter)
     #print(np.mean(data,axis=1))
     #print(np.std(data,axis=1))
 
+def validity():
+    counter=0
+    sum_wachter=0
+    sum_ates=0
+    sum_cfg=0
+    sum_out=0
+    sum_ng=0
+
+    for a in['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA']:#,'Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']: #os.listdir('./Results/Benchmarking'):
+        if os.path.isdir(f'./Results/Benchmarking/{a}'):
+            print(a)
+            counter += counter
+            print('Counter', counter)
+            data = pd.read_csv(f'./Results/Benchmarking/{a}/BenchmarkMetrics.csv')
+            print(data[data['method']== 'TS_Evo']['validity'].values[0])
+            sum_out+=data[data['method']== 'TS_Evo']['validity'].values[0]
+            sum_wachter+=data[data['method']== 'Wachter']['validity'].values[0]
+            sum_cfg+=data[data['method']== 'NG_DBN']['validity'].values[0]
+            sum_ng+=data[data['method']== 'NG_GradCam']['validity'].values[0]
+    print(f'Our {sum_out/counter} , Wachter {sum_wachter/counter}, NG_DBM {sum_cfg/counter}, NG_GradCAm {sum_ng/counter}' )
+            #TODO Multivariate is still TODO 
+            #sum_ates+=data[data['methods']== 'TS_Evo']['validity'].values[0]
+            
+    pass
+
 if __name__=='__main__':
-    build_figure()
+    validity()
+    #build_figure()
     #make_table_split()
-    dis_to_latex_2_Tables()
-    plot_dis(str(1))
-    calculate_total_ynn()
+    #dis_to_latex_2_Tables()
+    #plot_dis(str(1))
+    #calculate_total_ynn()
     #calculate_total_dis()
     #dis_to_latex_t()
     #calculate_validity()

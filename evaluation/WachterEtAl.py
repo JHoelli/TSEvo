@@ -84,7 +84,7 @@ def wachter_recourse(  torch_model,   x: np.ndarray,  y_target: List[int],  lr: 
 
         if datetime.datetime.now() - t0 > t_max:
             print("Timeout - No Counterfactual Explanation Found")
-            return None
+            return None,None
         elif f_x_new[0][y_target] >= 0.5:
             print("Counterfactual Explanation Found")
-    return x_new_enc.cpu().detach().numpy().squeeze(axis=0), np.argmax(f_x_new)
+    return x_new_enc.cpu().detach().numpy().squeeze(axis=0), np.argmax(f_x_new.detach().numpy())

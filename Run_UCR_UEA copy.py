@@ -14,8 +14,7 @@ import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 
-run_on = ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
-draw_plot=False
+run_on =['CharacterTrajectories','MotorImagery','PenDigits']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
 mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both']
@@ -23,6 +22,8 @@ mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate
 for dataset in reversed(run_on): 
     '''Get Data'''
     X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+    X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
     train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
@@ -74,9 +75,7 @@ for dataset in reversed(run_on):
                 pickle.dump(mutation,open( f'./Results/{mut}/{dataset}/Mut_{i}.pkl', "wb" ))
 
             
-            original = observation_01
-            #print(observation_01.shape)
-            #print(np.array(pop).shape) 
+            original = observation_01 
             ynn.append(yNN(counterfactuals, mlmodel,train_x,5)[0][0])
             ynn_timeseries.append(yNN_timeseries(counterfactuals, mlmodel,train_x,5)[0][0])
             red.append(redundancy(original, counterfactuals, mlmodel)[0])
@@ -99,11 +98,11 @@ for dataset in reversed(run_on):
                 j = j+1
             sal_02.append(np.count_nonzero(np.abs(timeline_max.reshape(-1)-np.array(pop)[0].reshape(-1)).reshape(1,-1)))
 
-            if draw_plot:
-                plot_CF(pop,path=f'./Results/{mut}/{dataset}/Only_CF_{i}.png')
-                plot_CF_Original_Closest(pop,observation_01,label_01,timeline_max, l[i_max], path=f'./Results/{mut}/{dataset}Original_CF_Closest_{i}.png')
-                pop=np.array(pop)[0]
-                plot_CF_Original(pop, observation_01,label_01, path=f'./Results/{mut}/{dataset}/Original_CF_{i}.png')
+            #if draw_plot:
+            #    plot_CF(pop,path=f'./Results/{mut}/{dataset}/Only_CF_{i}.png')
+            #    plot_CF_Original_Closest(pop,observation_01,label_01,timeline_max, l[i_max], path=f'./Results/{mut}/{dataset}Original_CF_Closest_{i}.png')
+            #    pop=np.array(pop)[0][0]
+            #    plot_CF_Original(pop, observation_01,label_01, path=f'./Results/{mut}/{dataset}/Original_CF_{i}.png')
                 
             if i==19:
                 print('Stop Run')

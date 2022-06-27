@@ -12,24 +12,19 @@ import sklearn
 import torch
 from models.CNN_TSNet import UCRDataset, train
 from models.ResNet import ResNetBaseline, fit, get_all_preds
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 import numpy as np
-
 from TSEvo.CounterfactualExplanation import Explanation
 from evaluation import WachterEtAl
 import pickle
 from evaluation.AtesEtAl import OptimizedSearch
-from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 import warnings
 from evaluation.Instance_BasedCF_NativeGuide import NativeGuidCF
+from tslearn.datasets import UCR_UEA_datasets
+from evaluation.COMTE import AtesCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
-from tslearn.datasets import UCR_UEA_datasets
 from models.ResNet import ResNetBaseline
-from data.DataLoader import load_UEA_dataset
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
@@ -56,10 +51,10 @@ for dataset in run_on:
     test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
 
     enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
-    test_y=enc1.transform(y_test.reshape(-1,1))
-    train_y=enc1.transform(y_train.reshape(-1,1))
+    test_y=enc1.transform(test_y.reshape(-1,1))
+    train_y=enc1.transform(train_y.reshape(-1,1))
     n_classes = test_y.shape[1]
-    print(n_classes)
+    #print(n_classes)
 
 
     '''Load Model'''    
@@ -73,8 +68,8 @@ for dataset in run_on:
     test_y=y_pred
 
     '''Explanation Method'''    
-    comte = OptimizedSearch(mlmodel, train_x, np.argmax(train_y,axis=1), silent=False, threads=1,num_distractors=2)
-
+    #comte = OptimizedSearch(mlmodel, train_x, np.argmax(train_y,axis=1), silent=False, threads=1,num_distractors=2)
+    ates= AtesCF(model, (test_x,test_y))
     '''Calculate'''
     #CF=[]
     #log=[]
@@ -136,48 +131,37 @@ for dataset in run_on:
     
         # Wachter et al . 
         item = item.reshape(1,sh[-2],sh[-1])
-        wachter_counterfactual=WachterEtAl.wachter_recourse(mlmodel, item, y_target)
-        #wachter_counterfactual=wachter_counterfactual.reshape(1,sh[-2],sh[-1])
+        wachter_counterfactual, laberl_w=WachterEtAl.wachter_recourse(mlmodel, item, y_target)
         wachter_cf.append(wachter_counterfactual)
+        print('Wachter',wachter_cf)
         if not wachter_counterfactual is None:
-            print(wachter_counterfactual.shape)
+            wachter_couterfactual=wachter_counterfactual.reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
             wachter_cf_s.append(wachter_counterfactual)
-            input_ = torch.from_numpy(np.array(wachter_counterfactual)).float().reshape(1,sh[-2],sh[-1])
-    
-            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-            wachter_y.append(np.argmax(output))
-            wachter_counterfactual=wachter_counterfactual.reshape(1,sh[-2],sh[-1])
-            #wachter_couterfactual=wachter_counterfactual.reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
+            print(wachter_counterfactual.shape)
+            wachter_counterfactual =np.array([wachter_counterfactual])
             ynn_wachter.append(yNN(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
             ynn_timeseries_wachter.append(yNN_timeseries(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
             red_wachter.append(redundancy(original, wachter_counterfactual, mlmodel,labels=np.array([y_target]))[0])
             sal_01_wachter.append(d1_distance(observation_01,np.array(wachter_counterfactual)))
             sal_02_wachter.append(d2_distance(observation_01,np.array(wachter_counterfactual)))
+            if laberl_w == np.argmax(label_01,axis=1):
+                not_valid_wachter=not_valid_wachter+1
         else: 
+            print('No VAlid CF')
             not_valid_wachter=not_valid_wachter+1
 
-        item = item.reshape(sh[-2],sh[-1])
-        explanation = comte.explain(item,to_maximize=t,savefig=False) 
+        item = item.reshape(1,sh[-2],sh[-1])
+        explanation,lab_a  = ates.explain(item, method= 'opt') #ates.explain(item,to_maximize=t,savefig=False) 
         print(explanation)
         if explanation is None:
             ates_cf.append(None)
         
         if not explanation is None and not explanation==[]:
-            #print(explanation)
-            _,modifies=explanation
-            
-            #print(modifies.shape)
-            #print(modifies)
-            #if modifies is tuple:
-            try:    
-                _,modifies=modifies
-            except:
-                pass
-            modifies=modifies.reshape(1,sh[-2],sh[-1])
+            modifies=explanation.reshape(1,sh[-2],sh[-1])
             ates_cf_s.append(modifies)
-            input_ = torch.from_numpy(np.array(modifies)).float().reshape(1,sh[-2],sh[-1])
+            #input_ = torch.from_numpy(np.array(modifies)).float().reshape(1,sh[-2],sh[-1])
     
-            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+            #output = torch.nn.functional.softmax(model(input_)).detach().numpy()
             ates_y.append(np.argmax(output))
             ates_cf.append(modifies)
             #print(modifies.shape)
@@ -187,22 +171,27 @@ for dataset in run_on:
             red_ates.append(redundancy(original, modifies, mlmodel,labels=np.array([y_target]))[0])
             sal_01_ates.append(d1_distance(observation_01,np.array(modifies)))
             sal_02_ates.append(d2_distance(observation_01,np.array(modifies)))
+            if laberl_w == np.argmax(label_01,axis=1):
+                not_valid_ates=not_valid_ates+1
         else: 
-            not_valid_wachter=not_valid_ates+1
+            print('No VAlid CF')
+            not_valid_ates=not_valid_ates+1
 
 
 
 
 
-    full_dataset.append(dataset)
-    full_dataset.append(dataset)
-    full_dataset.append(dataset)
-    full_method.append('Wachter')
-    full_method.append('TSEvo')
-    full_method.append('Ates')
-    full_ynn.append(yNN_timeseries(wachter_cf_s, mlmodel,train_x,5,labels=np.array(wachter_y)))
-    full_ynn.append(yNN_timeseries(cfs, mlmodel,train_x,5,labels=np.array(ys)))
-    full_ynn.append(yNN_timeseries(ates_cf_s, mlmodel,train_x,5,labels=np.array(ates_y)))
+    #full_dataset.append(dataset)
+    #full_dataset.append(dataset)
+    #full_dataset.append(dataset)
+    #full_method.append('Wachter')
+    #full_method.append('TSEvo')
+    #full_method.append('Ates')
+    #print(wachter_cf)
+    #print(np.array(wachter_cf_s).shape)
+    #full_ynn.append(yNN_timeseries(wachter_cf_s, mlmodel,train_x,5,labels=np.array(wachter_y)))
+    #full_ynn.append(yNN_timeseries(cfs, mlmodel,train_x,5,labels=np.array(ys)))
+    #full_ynn.append(yNN_timeseries(ates_cf_s, mlmodel,train_x,5,labels=np.array(ates_y)))
 
 
     pickle.dump(wachter_cf,open(f'./Results/Benchmarking/{dataset}/Wachter_cf.pkl','wb'))
@@ -238,9 +227,9 @@ for dataset in run_on:
 #results.to_csv(f'./Results/{dataset}/BenchmarkMetrics.csv')
     #results['closest']=sal_02
     results.to_csv(f'./Results/Benchmarking/{dataset}/BenchmarkMetrics.csv')
-frame=pd.DataFrame([])
-frame['Dataset']=full_dataset
-frame['Method']=full_method
-frame['ynn']=full_ynn
+#frame=pd.DataFrame([])
+#frame['Dataset']=full_dataset
+#frame['Method']=full_method
+#frame['ynn']=full_ynn
 
-frame.to_csv('Full_ynn_UEA.csv')
+#frame.to_csv('Full_ynn_UEA.csv')

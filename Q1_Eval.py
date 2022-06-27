@@ -243,8 +243,7 @@ def rerun_l1_l2():
 
     return dis
 
-def evaluate_benchmarks_according_to_o():
-    pass
+
 def plot_l1_l2(rerun = True, flip= True):
     '''
     One Graphik in dis 1 and one for dis 2... 
@@ -259,6 +258,7 @@ def plot_l1_l2(rerun = True, flip= True):
     #sns.set_style('whitegrid')
     #ax = sns.violinplot(x='Survived', y='Age', data=df)
     #ax = sns.stripplot(x="Survived", y="Age", data=df)
+
     group1= []
     group2=[]
     dataset=[]
@@ -298,9 +298,11 @@ def plot_l1_l2(rerun = True, flip= True):
         handles, labels = axes[0].get_legend_handles_labels()
         f.legend(handles, labels, loc='upper right', ncol=5, bbox_to_anchor=(.75, 0.98))
         plt.tight_layout()
-        plt.savefig('myimage.png', format='png', dpi=1200)
+        #plt.savefig('myimage.png', format='png', dpi=1200)
         plt.show()
-        plt.close()
+        #plt.close()
+
+
 def flatex_full_ynn():
     data = pd.read_csv('./Results/ALL_ynn.csv')
     for name in np.unique(data['Dataset']):
@@ -511,8 +513,25 @@ def build_figure_mut(k=0):
         #plt.show()
         plt.close()
 
-if __name__ == 'main':
+def yNN_to_latex():
+    data = pd.read_csv('./Results/ALL_ynn.csv')
+    string=''
+    string = 'Dataset & Opposing & Frequency & Gaussian & Combination \\\\ \hline '
+    for line in np.unique(data['Dataset']):
+        li = data[data['Dataset'] ==line]
+        opposing=li[li['mut']=='authentic_opposing_information']['ynn']
+        frequency=li[li['mut']=='frequency_band_mapping']['ynn']
+        gaussian =li[li['mut']=='mutate_mean']['ynn']
+        combinbation=li[li['mut']=='mutate_both']['ynn']
+        #print(opposing)
+        string += f'{line} & ${opposing.round(4).values[0]}$ & ${frequency.round(4).values[0]}$ & ${gaussian.round(4).values[0]}$ & ${combinbation.round(4).values[0]}$ \\\\ \hline '
 
-    plot_l1_l2(True, False)
-    calculate_full_ynn(True, True)
-    #build_figure_mut()
+    print(string)
+
+#if __name__ == 'main':
+#TODO overall values in table ! 
+
+#plot_l1_l2(True, False)
+calculate_full_ynn(True, True)
+#build_figure_mut()
+yNN_to_latex()

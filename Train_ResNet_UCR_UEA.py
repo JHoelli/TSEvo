@@ -15,15 +15,18 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 import numpy as np
-from data.DataLoader import load_UCR_dataset
 from tslearn.datasets import UCR_UEA_datasets
 
 
 os_type= platform.system()
 
-datasets =['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+datasets =['CharacterTrajectories','MotorImagery']#['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 for dataset in datasets:
     X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+    X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
+    #print(X_train.shape)
+    #print(X_train[0])
     train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     enc1=sklearn.preprocessing.OneHotEncoder(sparse=False).fit(train_y.reshape(-1,1))

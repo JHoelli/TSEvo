@@ -25,7 +25,6 @@ import warnings
 from evaluation.Instance_BasedCF_NativeGuide import NativeGuidCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
-from data.DataLoader import load_UCR_dataset
 from tslearn.datasets import UCR_UEA_datasets
 # TODO Pay Respect to shape ( Multivariate)
 # TODO Ates
@@ -65,8 +64,11 @@ for dataset in run_on:
     y_pred= model(torch.from_numpy(test_x).float()).detach().numpy()
     test_y=y_pred
     '''Explanation Method'''
-    #TODO Use new Method !     
-    nguide_cf=NativeGuidCF(model,np.array(train_x)[0].shape)
+    from evaluation.COMTE import AtesCF
+    from evaluation.Nun_CF import NativeGuideCF
+    '''Initialize Methods'''
+    nguide_cf=NativeGuideCF(model,np.array(train_x).shape, (test_x,test_y))
+    ates= AtesCF(model, (test_x,test_y))
 
     '''Calculate'''
     ynn=[]
@@ -126,7 +128,7 @@ for dataset in run_on:
         #print(item.shape)
         #print(observation_01.shape)
         item = item.reshape(1,item.shape[-2],item.shape[-1])
-        wachter_counterfactual=WachterEtAl.wachter_recourse(mlmodel, item, y_target)
+        wachter_counterfactual, laberl_w=WachterEtAl.wachter_recourse(mlmodel, item, y_target)
         wachter_cf.append(wachter_counterfactual)
         if not wachter_counterfactual is None:
             wachter_couterfactual=wachter_counterfactual.reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
@@ -135,27 +137,32 @@ for dataset in run_on:
             red_wachter.append(redundancy(original, wachter_counterfactual, mlmodel,labels=np.array([y_target]))[0])
             sal_01_wachter.append(d1_distance(observation_01,np.array(wachter_counterfactual)))
             sal_02_wachter.append(d2_distance(observation_01,np.array(wachter_counterfactual)))
+            if laberl_w == np.argmax(label_01,axis=1):
+                not_valid_wachter=not_valid_wachter+1
         else: 
-            not_valid_wachter=not_valid_wachter+1
-        #Other Approach 
+             not_valid_wachter=not_valid_wachter+1
+            #Other Approach 
 
         item = item.reshape(1,item.shape[-2],item.shape[-1])
-        cfg_counterfactual=nguide_cf.counterfactual_generator_swap(item,  y_target,(train_x,train_y),train_x,subarray_length=1)#(mlmodel, item, y_target).reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
+        cfg_counterfactual,label_cfg=nguide_cf.explain(item,  y_target)#(mlmodel, item, y_target).reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
         cfg_cf.append(cfg_counterfactual)
         if not cfg_counterfactual is None:
-        
+            print(cfg_counterfactual.shape)
             ynn_cfg.append(yNN(cfg_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
             ynn_timeseries_cfg.append(yNN_timeseries(cfg_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
             red_cfg.append(redundancy(original, cfg_counterfactual, mlmodel,labels=np.array([y_target]))[0])
             sal_01_cfg.append(d1_distance(observation_01,np.array(cfg_counterfactual)))
             sal_02_cfg.append(d2_distance(observation_01,np.array(cfg_counterfactual)))
+            if label_cfg == np.argmax(label_01,axis=1):
+                not_valid_cfg=not_valid_cfg+1
+
         else: 
             not_valid_cfg=not_valid_cfg+1
 
         #Other 2 
         item = item.reshape(1,item.shape[-2],item.shape[-1])
         reference_set=(train_x,train_y)
-        ib_counterfactual=nguide_cf.instance_based_cf(item,y_target,reference_set)#(mlmodel, item, y_target).reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
+        ib_counterfactual,label_ib=nguide_cf.explain(item,  y_target,method='dtw_bary_center')#(mlmodel, item, y_target).reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
         ib_cf.append(ib_counterfactual)
     
         if not ib_counterfactual is None:
@@ -165,6 +172,8 @@ for dataset in run_on:
             red_ib.append(redundancy(original, ib_counterfactual, mlmodel,labels=np.array([y_target]))[0])
             sal_01_ib.append(d1_distance(observation_01,np.array(ib_counterfactual)))
             sal_02_ib.append(d2_distance(observation_01,np.array(ib_counterfactual)))
+            if label_ib == np.argmax(label_01,axis=1):
+                not_valid_ib=not_valid_ib+1
         else: 
             not_valid_ib=not_valid_ib+1
         

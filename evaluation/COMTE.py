@@ -441,12 +441,15 @@ class OptimizedSearch(BaseExplanation):
         explanation = self._get_explanation(
             x_test, to_maximize, num_features, return_dist, savefig=savefig)
         tr,_=explanation
-        if tr==None:
+        if tr is None:
             print('Run Brute Force as Backup.')
             explanation = self.backup.explain(x_test, num_features=num_features,
                                        to_maximize=to_maximize, return_dist=return_dist, savefig=savefig)
         best, other = explanation
+        print('Other',np.array(other).shape)
+        print('Best',np.array(best).shape)
         target = np.argmax(self.clf(best),axis=1)
+        
         return best, target
 
     def _get_explanation(self, x_test, to_maximize, num_features, return_dist=False, savefig=False):
@@ -508,7 +511,7 @@ class OptimizedSearch(BaseExplanation):
         if len(best_explanation) == 0:
             return None, None
         if return_dist == False: 
-            return best_explanation,best_modified
+            return best_modified, best_explanation
         else:
             return best_explanation, best_dist
 
@@ -535,7 +538,17 @@ class AtesCF():
         self.referenceset=(test_x,test_y)
         
     def get_prediction_torch(self, individual):
-        individual = np.array(individual.tolist(), dtype=np.float64)
+        
+        #print(type(individual))
+        #print(individual)
+        try: 
+            individual = np.array(individual.tolist(), dtype=np.float64)
+        except:
+            print('IND',individual)
+            print('len[0]',len(individual))
+            print('len[1]',len(individual[0]))
+            a,b = individual
+            individual = np.array(a.tolist(), dtype=np.float64)
         input_ = torch.from_numpy(individual).float()#.reshape(1,-1,self.window)
   
         with torch.no_grad():
