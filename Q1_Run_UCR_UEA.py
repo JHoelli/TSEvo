@@ -14,10 +14,11 @@ import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 
-run_on =['CharacterTrajectories','MotorImagery']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+run_on =['CharacterTrajectories']#,'MotorImagery']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
-mutation_type=['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both']
+#TODO undo reversed
+mutation_type=reversed(['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both'])
 
 for dataset in run_on: 
     '''Get Data'''
