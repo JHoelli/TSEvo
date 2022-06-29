@@ -1,3 +1,4 @@
+from turtle import color
 import pandas as pd
 import matplotlib.pyplot as plt
 import os 
@@ -23,13 +24,15 @@ def calculate_full_ynn(new_calculation=False, sum = False):
         if not new_calculation:
 
             break
-        for dataset in os.listdir(f'./Results/{mut}'):
-        #for dataset in os.listdir(f'./Results/{mut}'): 
-            
+        print('./Results/{mut}')
+        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary']: #os.listdir(f'./Results/{mut}'):
+               
             '''Get Data'''
             if os.path.isdir(f'./Results/{mut}/{dataset}'):
                 print(f'./Results/{mut}/{dataset}')
                 X_train,train_y, X_test, test_y=UCR_UEA_datasets().load_dataset(dataset)
+                X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+                X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
                 train_x = X_train.reshape(X_train.shape[0], X_train.shape[-1], X_train.shape[-2])
                 test_x = X_test.reshape(X_test.shape[0], X_train.shape[-1], X_test.shape[-2])
                 enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
@@ -195,31 +198,32 @@ def rerun_l1_l2():
     dis = {}
     for mut in files: 
         dis[f'{mut}']={}#f'{dataset}':{}}
-        for dataset in os.listdir(f'./Results/{mut}'):
+        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary']:#os.listdir(f'./Results/{mut}'):
             if not dataset.endswith('.csv') and not dataset.endswith('.png'):
                 print(f'{mut}/{dataset}')
                 
                 X_train,y_train, X_test, y_test=UCR_UEA_datasets().load_dataset(dataset)
+                X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+                X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
                 train_x = X_train.reshape(X_train.shape[0], X_train.shape[-1], X_train.shape[-2])
                 test_x = X_test.reshape(X_test.shape[0], X_train.shape[-1], X_test.shape[-2])
                 
+                
                 if True:
-                    enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
-                    test_y=enc1.transform(y_test.reshape(-1,1))
-                    n_classes = test_y.shape[1]
+                    #enc1=pickle.load(open(f'./models/{dataset}/OneHotEncoder.pkl','rb'))
+                    #test_y=enc1.transform(y_test.reshape(-1,1))
+                    #n_classes = test_y.shape[1]
                     #print(n_classes)
                     sal_01=[]
                     sal_02=[]
-                    #TODO Not Converging ! 
-                    max_iteration=min(len(test_y),19)
+                    ##TODO Not Converging ! 
+                    #max_iteration=min(len(test_y),19)
                     for i, item in enumerate(test_x):
                         #print(f'Dataset {dataset} Iteration {i}/{max_iteration}')
                         observation_01=item
-                        label_01=np.array([test_y[i]])#test_y[0]
+                        #label_01=np.array([test_y[i]])#test_y[0]
                         #print(label_01)
                         pop=pickle.load(open( f'./Results/{mut}/{dataset}/Counterfactuals_{i}.pkl', "rb" ))
-
-
                 
                         counterfactuals = np.array(pop)[0]
                         #print(np.array(pop[0]).shape)
@@ -231,7 +235,7 @@ def rerun_l1_l2():
                         original = observation_01
                         sal_01.append(d1_distance(observation_01,counterfactuals))
                         sal_02.append(d2_distance(observation_01,counterfactuals))
-                        if i == max_iteration:
+                        if i == 19:
                             break
                 
                 #print(f'saved mut,{mut}')
@@ -528,10 +532,172 @@ def yNN_to_latex():
 
     print(string)
 
+def l1_l2_averaged_BoxPlots(rerun=True):
+    #TODO Include Averaged YNN
+    if rerun:
+        dis = rerun_l1_l2()
+    #print(dis)
+    # Claculation F1 / F2 first to be implemented
+    import seaborn as sns
+    #sns.set_style('whitegrid')
+    #ax = sns.violinplot(x='Survived', y='Age', data=df)
+    #ax = sns.stripplot(x="Survived", y="Age", data=df)
+    
+    group1_mean= []
+    group2_mean=[]
+    group1_std= []
+    group2_std=[]
+    dataset=[]
+    group1_total=[]
+    group2_total=[]
+    ynn=[]
+    mutation=[]
+    data=pd.DataFrame([])
+    print (dis.keys())
+    data_ynn = pd.read_csv('./Results/ALL_ynn.csv')
+
+    for mut in files:
+        
+        print(dis[f'{mut}'].keys())
+        for a in sorted(dis[f'{mut}'].keys()):
+            group1_total.extend(dis[f'{mut}'][f'{a}']['dis_1'])
+            group2_total.extend(dis[f'{mut}'][f'{a}']['dis_2'])
+            line=data_ynn[data_ynn['Dataset']==a]
+            h=line[line['mut']==mut]['ynn'].values[0]
+            #print(len(dis[f'{mut}'][f'{a}']['dis_1']))
+            #mutation.extend(np.full_like(len(dis[f'{mut}'][f'{a}']['dis_1']),[f'{mut}']))
+            for item in dis[f'{mut}'][f'{a}']['dis_1']:
+                mutation.append(mut)
+                ynn.append(h)
+    
+
+
+    
+    data['sparsity']=group1_total
+    data['proximity']=group2_total
+    data['mutation']=mutation
+    data['yNN']=ynn
+
+    data['mutation']=data['mutation'].str.replace('mutate_mean','Gaussian')
+    data['mutation']=data['mutation'].str.replace('mutate_both','Combination')
+    data['mutation']=data['mutation'].str.replace('authentic_opposing_information','Opposing')
+    data['mutation']=data['mutation'].str.replace('frequency_band_mapping','Frequency')
+    f, axes = plt.subplots(1, 3)
+    sns.boxplot(x='mutation',y='sparsity',data=data,ax=axes[0],color='grey')
+    sns.boxplot(x='mutation',y='proximity',data=data,ax=axes[1],color='grey')
+    sns.boxplot(x='mutation',y='yNN',data=data,ax=axes[2],color='grey')
+    #axes[0].get_legend().remove()
+    #axes[1].get_legend().remove()
+    #handles, labels = axes[0].get_legend_handles_labels()
+    #f.legend(handles, labels, loc='upper right', ncol=5, bbox_to_anchor=(.75, 0.98))
+    plt.tight_layout()
+    #plt.savefig('myimage.png', format='png', dpi=1200)
+    plt.show()
+            #group1_mean.extend(np.mean(dis[f'{mut}'][f'{a}']['dis_1']))
+            #group1_std.extend(np.std(dis[f'{mut}'][f'{a}']['dis_1']))
+            #group2_mean.extend(np.mean(dis[f'{mut}'][f'{a}']['dis_2']))
+            #group2_std.extend(np.std(dis[f'{mut}'][f'{a}']['dis_2']))
+
+    pass
+
+def l1_l2_averaged_BoxPlots_datasetwise(rerun=True, astable=False):
+    #TODO Labels, Limits and figsize, FORMAT
+    if rerun:
+        dis = rerun_l1_l2()
+    #print(dis)
+    # Claculation F1 / F2 first to be implemented
+    import seaborn as sns
+    #sns.set_style('whitegrid')
+    #ax = sns.violinplot(x='Survived', y='Age', data=df)
+    #ax = sns.stripplot(x="Survived", y="Age", data=df)
+    
+    group1_mean= []
+    group2_mean=[]
+    group1_std= []
+    group2_std=[]
+    dataset=[]
+    
+    data=pd.DataFrame([])
+    print (dis.keys())
+    data_ynn = pd.read_csv('./Results/ALL_ynn.csv')
+    string_sparity=''
+    string_proximity=''
+    string_yNN =''
+    header=''
+
+    for a in sorted(dis[f'mutate_both'].keys()):
+        group1_total=[]
+        group2_total=[]
+        ynn=[]
+        mutation=[]
+        for mut in files:
+            group1_total.extend(dis[f'{mut}'][f'{a}']['dis_1'])
+            group2_total.extend(dis[f'{mut}'][f'{a}']['dis_2'])
+            line=data_ynn[data_ynn['Dataset']==a]
+            h=line[line['mut']==mut]['ynn'].values[0]
+            for item in dis[f'{mut}'][f'{a}']['dis_1']:
+                mutation.append(mut)
+                ynn.append(h)
+    
+
+
+    
+        data['sparsity']=group1_total
+        data['proximity']=group2_total
+        data['mutation']=mutation
+        data['yNN']=ynn
+
+        data['mutation']=data['mutation'].str.replace('mutate_mean','Gaussian')
+        data['mutation']=data['mutation'].str.replace('mutate_both','Combination')
+        data['mutation']=data['mutation'].str.replace('authentic_opposing_information','Opposing')
+        data['mutation']=data['mutation'].str.replace('frequency_band_mapping','Frequency')
+        plt.figure(figsize=(15,15))
+        f, axes = plt.subplots(1, 2)
+        sns.boxplot(x='mutation',y='sparsity',data=data,ax=axes[0],color='grey')
+        sns.boxplot(x='mutation',y='proximity',data=data,ax=axes[1],color='grey')
+        plt.tight_layout()
+        plt.savefig(f'./Paper_Images/q1_{a}.png', format='png', dpi=1200)
+        if astable:
+            di='sparsity'
+            mean_auth =str(round(np.mean(data[data['mutation']=='Opposing'][di]),2))
+            std_auth =str(round(np.std(data[data['mutation']=='Opposing'][di]),2))
+            mean_freq =str(round(np.mean(data[data['mutation']=='Frequency'][di]),2))
+            std_freq =str(round(np.std(data[data['mutation']=='Frequency'][di]),2))
+            mean_gaus =str(round(np.mean(data[data['mutation']=='Gaussian'][di]),2))
+            std_gaus =str(round(np.std(data[data['mutation']=='Gaussian'][di]),2))
+            mean_com =str(round(np.mean(data[data['mutation']=='Combination'][di]),2))
+            std_com =str(round(np.std(data[data['mutation']=='Combination'][di]),2))
+            string_sparity += f' {a} & ${mean_auth} \pm {std_auth}$ & ${mean_freq} \pm {std_freq}$ & ${mean_gaus} \pm {std_gaus}$ & ${mean_com} \pm {std_com}$ \\\\ \hline'
+            di='proximity'
+            mean_auth =str(round(np.mean(data[data['mutation']=='Opposing'][di]),2))
+            std_auth =str(round(np.std(data[data['mutation']=='Opposing'][di]),2))
+            mean_freq =str(round(np.mean(data[data['mutation']=='Frequency'][di]),2))
+            std_freq =str(round(np.std(data[data['mutation']=='Frequency'][di]),2))
+            mean_gaus =str(round(np.mean(data[data['mutation']=='Gaussian'][di]),2))
+            std_gaus =str(round(np.std(data[data['mutation']=='Gaussian'][di]),2))
+            mean_com =str(round(np.mean(data[data['mutation']=='Combination'][di]),2))
+            std_com =str(round(np.std(data[data['mutation']=='Combination'][di]),2))
+            string_proximity += f' {a} & ${mean_auth} \pm {std_auth}$ & ${mean_freq} \pm {std_freq}$ & ${mean_gaus} \pm {std_gaus}$ & ${mean_com} \pm {std_com}$ \\\\ \hline'
+            header += f' {a}&'
+            y_auth=str(round(np.mean(data[data['mutation']=='Opposing']['yNN']),4))
+            y_freq=str(round(np.mean(data[data['mutation']=='Frequency']['yNN']),4))
+            y_gauss=str(round(np.mean(data[data['mutation']=='Gaussian']['yNN']),4))
+            y_comb=str(round(np.mean(data[data['mutation']=='Combination']['yNN']),4))
+            string_yNN+= f'  {a} & ${y_auth}$& ${y_freq}$& ${y_gauss}$ &${y_comb}$ \\\\ \hline '
+    if astable:
+        print('################Sparsity####################')
+        print(string_sparity)
+        print('################Proximity####################')
+        print(string_proximity)
+        print('#################yNN###################')
+        print(string_yNN)
 #if __name__ == 'main':
 #TODO overall values in table ! 
-
+#calculate_full_ynn(True, True)
+#l1_l2_averaged_BoxPlots()
+#l1_l2_to_latex()
 #plot_l1_l2(True, False)
-calculate_full_ynn(True, True)
+#
 #build_figure_mut()
-yNN_to_latex()
+#yNN_to_latex()
+l1_l2_averaged_BoxPlots_datasetwise(astable=True)

@@ -14,11 +14,11 @@ import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 
-run_on =['CharacterTrajectories']#,'MotorImagery']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
+run_on =['Heartbeat']#['CharacterTrajectories']#,'MotorImagery']# ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
 #TODO undo reversed
-mutation_type=reversed(['authentic_opposing_information','frequency_band_mapping','mutate_mean','mutate_both'])
+mutation_type=reversed(['authentic_opposing_information','frequency_band_mapping']) #,'mutate_mean','mutate_both'
 
 for dataset in run_on: 
     '''Get Data'''
@@ -84,20 +84,20 @@ for dataset in run_on:
 
             # Closest from opprosite class
 
-            data= test_x[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1) ]
-            l= y_pred[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1)]
-            timeline_max=[]
-            mi_max=5
-            j= 0
-            i_max=0
-            for timeline in data: 
-                mi = np.sum(np.abs(timeline.reshape(-1)- observation_01.reshape(-1) ))/150
-                if mi <mi_max: 
-                    mi_max=mi
-                    timeline_max= timeline
-                    i_max=j
-                j = j+1
-            sal_02.append(np.count_nonzero(np.abs(timeline_max.reshape(-1)-np.array(pop)[0].reshape(-1)).reshape(1,-1)))
+            #data= test_x[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1) ]
+            #l= y_pred[np.argmax(y_pred,axis=1) != np.argmax(label_01,axis= 1)]
+            #timeline_max=[]
+            #mi_max=5
+            #j= 0
+            #i_max=0
+            #for timeline in data: 
+            #    mi = np.sum(np.abs(timeline.reshape(-1)- observation_01.reshape(-1) ))/150
+            #    if mi <mi_max: 
+            #        mi_max=mi
+            #        timeline_max= timeline
+            #        i_max=j
+            #    j = j+1
+            #sal_02.append(np.count_nonzero(np.abs(timeline_max.reshape(-1)-np.array(pop)[0].reshape(-1)).reshape(1,-1)))
 
             #if draw_plot:
             #    plot_CF(pop,path=f'./Results/{mut}/{dataset}/Only_CF_{i}.png')
@@ -114,5 +114,5 @@ for dataset in run_on:
         results['ynn_timeseries']=ynn_timeseries
         results['red']=red
         results['sparsity']=sal_01
-        results['closest']=sal_02
+        #results['closest']=sal_02
         results.to_csv(f'./Results/{mut}/{dataset}/Metrics.csv')
