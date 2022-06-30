@@ -63,6 +63,7 @@ class Wachter():
             res = minimize(self._loss_function_mad, x0.reshape(1,-1), method='nelder-mead', options={'maxiter':10, 'xatol': 50, 'adaptive': True})
             cf = res.x.reshape(1,self.shape[0],self.shape[1])
             prob_target = self.predict(cf)[0][target]
+            t=self.predict(cf)
             i += 1
             if i == 500:
                 print('Error condition not met after',i,'iterations')
@@ -73,4 +74,4 @@ class Wachter():
         min_edit_cf.append(cf[0])
 
     
-        return min_edit_cf, undefined_cf_instance
+        return np.array(min_edit_cf), np.argmax(t,axis=1)
