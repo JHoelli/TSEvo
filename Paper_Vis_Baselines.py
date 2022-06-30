@@ -259,7 +259,8 @@ def make_table_split():
             line_a=line_a+'\\'+'\\'
             print(line_a)
 
-def build_figure(k=0):
+def build_figure(k=3):
+    #TODO check if item is none firsr
     j=1
     #k=0
     for dataset in ['GunPoint','CBF','Coffee','ECG5000','ElectricDevices','FordA']:#os.listdir('./Benchmarking'):#'CBF','Coffee','ECG5000','ElectricDevices','FordA',
@@ -296,6 +297,7 @@ def build_figure(k=0):
             if wa is None:
                 wa=np.zeros_like(original)
         except:
+            print('Wachter is None')
             wa=np.zeros_like(original)
         
         if mi>np.min(wa.reshape(-1),axis=0):
@@ -306,6 +308,7 @@ def build_figure(k=0):
             cfg= pickle.load(open(f'./Results/Benchmarking/{dataset}/cfg_cf.pkl','rb'))[0]
             if cfg is None:
                 cfg=np.zeros_like(original)
+                print('CFG is None')
 
         except:
             cfg=np.zeros_like(original)
@@ -318,15 +321,15 @@ def build_figure(k=0):
             if ib is None:
                 ib=np.zeros_like(original)
         except:
-            
+            print('IB is None')
             ib=np.zeros_like(original)
         if mi> np.min(ib.reshape(-1),axis=0):
             mi=np.min(ib.reshape(-1),axis=0)
         if ma<np.max(ib.reshape(-1),axis=0):
             ma=np.max(ib.reshape(-1),axis=0)
-        print('Test_Y ',test_y)
-        print('Label',label)
-        print(test_y[test_y != label])
+        #print('Test_Y ',test_y)
+        #print('Label',label)
+        #print(test_y[test_y != label])
         data= test_x[np.where(test_y != label)]
         timeline_max=[]
         y=test_y[test_y != label]
@@ -602,27 +605,32 @@ def validity():
     sum_cfg=0
     sum_out=0
     sum_ng=0
+    string=''
 
     for a in['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA']:#,'Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']: #os.listdir('./Results/Benchmarking'):
         if os.path.isdir(f'./Results/Benchmarking/{a}'):
             print(a)
             counter += counter
-            print('Counter', counter)
+            #print('Counter', counter)
             data = pd.read_csv(f'./Results/Benchmarking/{a}/BenchmarkMetrics.csv')
-            print(data[data['method']== 'TS_Evo']['validity'].values[0])
-            sum_out+=data[data['method']== 'TS_Evo']['validity'].values[0]
-            sum_wachter+=data[data['method']== 'Wachter']['validity'].values[0]
-            sum_cfg+=data[data['method']== 'NG_DBN']['validity'].values[0]
-            sum_ng+=data[data['method']== 'NG_GradCam']['validity'].values[0]
-    print(f'Our {sum_out/counter} , Wachter {sum_wachter/counter}, NG_DBM {sum_cfg/counter}, NG_GradCAm {sum_ng/counter}' )
+            #print(data[data['method']== 'TS_Evo']['validity'].values[0])
+            
+
+            sum_out=data[data['method']== 'TS_Evo']['validity'].values[0]
+            sum_wachter=data[data['method']== 'Wachter']['validity'].values[0]
+            sum_cfg=data[data['method']== 'NG_DBN']['validity'].values[0]
+            sum_ng=data[data['method']== 'NG_GradCam']['validity'].values[0]
+            string +=f' {a} & ${sum_out}$ & ${sum_wachter}$ & ${sum_cfg}$ & ${sum_ng}$ \\\\ \hline'
+            #print(f'Our {sum_out/counter} , Wachter {sum_wachter/counter}, NG_DBM {sum_cfg/counter}, NG_GradCAm {sum_ng/counter}' )
             #TODO Multivariate is still TODO 
             #sum_ates+=data[data['methods']== 'TS_Evo']['validity'].values[0]
+    print(string)
             
     pass
 
 if __name__=='__main__':
-    #validity()
-    build_figure()
+    validity()
+    #build_figure()
     #make_table_split()
     #dis_to_latex_2_Tables()
     #plot_dis(str(1))

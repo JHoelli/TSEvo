@@ -1,4 +1,4 @@
-,method,validity,ynn_timeseries,ynn_timeseries_std,red,red_std,sparsity,sparsity_std,dis,dis_std
-0,TS_Evo,Not implemented,,,,,,,,
-1,Wachter,1.0,,,,,,,,
-2,Ates,1.0,,,,,,,,
+,method,validity,ynn_timeseries,ynn_timeseries_std,sparsity,sparsity_std,dis,dis_std
+0,TS_Evo,Not implemented,1.0,0.0,0.1137846589759158,0.21311387322745115,0.009750323633565148,0.029694179836242545
+1,Wachter,0.25,0.8000000000000002,1.1102230246251565e-16,1.0,0.0,0.01843178875003921,0.0194058037619485
+2,Ates,1.0,0.89,0.09949874371066197,0.06229103420360251,0.048241461529515896,0.010295525288403157,0.01215339474747552

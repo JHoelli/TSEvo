@@ -123,7 +123,7 @@ class NativeGuideCF():
         return (vec[np.argmax(sum_arr)])
 
     def _counterfactual_generator_swap(self,instance, label,subarray_length=1,max_iter=500):
-        print(label)
+        #print(label)
         _,nun=self._native_guide_retrieval(instance, label, 'euclidean', 1)
         if np.count_nonzero(nun.reshape(-1)-instance.reshape(-1))==0:
             print('Starting and nun are Identical !')
@@ -132,6 +132,7 @@ class NativeGuideCF():
         train_x=test_x
         individual = np.array(nun.tolist(), dtype=np.float64)
         out=self.predict(individual)
+        #print('out', out)
         if self.backend=='PYT': 
             training_weights = self.cam_extractor(out.squeeze(0).argmax().item(), out)[0].detach().numpy()
         elif self.backend=='TF':
@@ -141,6 +142,9 @@ class NativeGuideCF():
         individual = np.array(instance.tolist(), dtype=np.float64)
         out=self.predict(individual)
 
+        #individual = np.array(nun.tolist(), dtype=np.float64)
+        #out=self.predict(individual)
+        #print('original', out)
 
         most_influencial_array=self._findSubarray((training_weights), subarray_length)
     
@@ -149,21 +153,26 @@ class NativeGuideCF():
         X_example = instance.copy().reshape(1,-1)
         
         nun=nun.reshape(1,-1)
+        #print('X_bef',X_example[0,starting_point:subarray_length+starting_point])
         X_example[0,starting_point:subarray_length+starting_point] =nun[0,starting_point:subarray_length+starting_point]
+        #print('X_aft',X_example[0,starting_point:subarray_length+starting_point])
         individual = np.array(X_example.reshape(-1,1,train_x.shape[-1]).tolist(), dtype=np.float64)
         out=self.predict(individual)
         target = np.argsort(out)[0][-2:-1][0] 
         if target == label: 
             target = np.argsort(out)[0][-2:-1][1] 
+        #print('Target', target)
         prob_target =  out[0][target] #torch.nn.functional.softmax(model(torch.from_numpy(test_x))).detach().numpy()[0][y_pred[instance]]
         counter= 0
-        while prob_target > 0.5 and counter <max_iter:
+        while prob_target < 0.5 and counter <max_iter:
         
             subarray_length +=1        
             most_influencial_array=self._findSubarray((training_weights), subarray_length)
             starting_point = np.where(training_weights==most_influencial_array[0])[0][0]
             X_example = instance.copy().reshape(1,-1)
-            X_example[:,starting_point:subarray_length+starting_point] =nun[:,starting_point:subarray_length+starting_point]
+            #print('X_bef1', X_example[:,starting_point:subarray_length+starting_point])
+            X_example[0,starting_point:subarray_length+starting_point] =nun[0,starting_point:subarray_length+starting_point]
+            #print('X_aft1', X_example[:,starting_point:subarray_length+starting_point])
             individual = np.array(X_example.reshape(-1,1,train_x.shape[-1]).tolist(), dtype=np.float64)
             out=self.predict(individual)
             prob_target = out[0][target]

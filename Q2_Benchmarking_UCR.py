@@ -36,7 +36,7 @@ creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
 creator.create("Individual", list, fitness=creator.FitnessMin,window=0)
 
 mutation='mutate_both'
-run_on = ['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA']
+run_on = ['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA'] 
 draw_plot=False
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
