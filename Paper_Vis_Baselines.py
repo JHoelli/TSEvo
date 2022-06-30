@@ -262,7 +262,7 @@ def make_table_split():
 def build_figure(k=0):
     j=1
     #k=0
-    for dataset in ['GunPoint']:#os.listdir('./Benchmarking'):#'CBF','Coffee','ECG5000','ElectricDevices','FordA',
+    for dataset in ['GunPoint','CBF','Coffee','ECG5000','ElectricDevices','FordA']:#os.listdir('./Benchmarking'):#'CBF','Coffee','ECG5000','ElectricDevices','FordA',
         
         mi=5
         ma=-5
@@ -621,8 +621,8 @@ def validity():
     pass
 
 if __name__=='__main__':
-    validity()
-    #build_figure()
+    #validity()
+    build_figure()
     #make_table_split()
     #dis_to_latex_2_Tables()
     #plot_dis(str(1))

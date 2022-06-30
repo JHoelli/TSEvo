@@ -25,7 +25,7 @@ def calculate_full_ynn(new_calculation=False, sum = False):
 
             break
         print('./Results/{mut}')
-        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary']: #os.listdir(f'./Results/{mut}'):
+        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary','Heartbeat']: #os.listdir(f'./Results/{mut}'):
                
             '''Get Data'''
             if os.path.isdir(f'./Results/{mut}/{dataset}'):
@@ -198,7 +198,7 @@ def rerun_l1_l2():
     dis = {}
     for mut in files: 
         dis[f'{mut}']={}#f'{dataset}':{}}
-        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary']:#os.listdir(f'./Results/{mut}'):
+        for dataset in ['CBF','CharacterTrajectories','Coffee','ECG5000','ElectricDevices','FordA','GunPoint','NATOPS', 'UWaveGestureLibrary','Heartbeat']:#os.listdir(f'./Results/{mut}'):
             if not dataset.endswith('.csv') and not dataset.endswith('.png'):
                 print(f'{mut}/{dataset}')
                 
@@ -693,11 +693,11 @@ def l1_l2_averaged_BoxPlots_datasetwise(rerun=True, astable=False):
         print(string_yNN)
 #if __name__ == 'main':
 #TODO overall values in table ! 
-#calculate_full_ynn(True, True)
-#l1_l2_averaged_BoxPlots()
+calculate_full_ynn(True, True)
+l1_l2_averaged_BoxPlots()
 #l1_l2_to_latex()
-#plot_l1_l2(True, False)
+plot_l1_l2(True, False)
 #
-#build_figure_mut()
-#yNN_to_latex()
+build_figure_mut()
+yNN_to_latex()
 l1_l2_averaged_BoxPlots_datasetwise(astable=True)

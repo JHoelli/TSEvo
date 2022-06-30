@@ -152,7 +152,10 @@ class NativeGuideCF():
         X_example[0,starting_point:subarray_length+starting_point] =nun[0,starting_point:subarray_length+starting_point]
         individual = np.array(X_example.reshape(-1,1,train_x.shape[-1]).tolist(), dtype=np.float64)
         out=self.predict(individual)
-        prob_target =  out[0][label] #torch.nn.functional.softmax(model(torch.from_numpy(test_x))).detach().numpy()[0][y_pred[instance]]
+        target = np.argsort(out)[0][-2:-1][0] 
+        if target == label: 
+            target = np.argsort(out)[0][-2:-1][1] 
+        prob_target =  out[0][target] #torch.nn.functional.softmax(model(torch.from_numpy(test_x))).detach().numpy()[0][y_pred[instance]]
         counter= 0
         while prob_target > 0.5 and counter <max_iter:
         
@@ -163,10 +166,10 @@ class NativeGuideCF():
             X_example[:,starting_point:subarray_length+starting_point] =nun[:,starting_point:subarray_length+starting_point]
             individual = np.array(X_example.reshape(-1,1,train_x.shape[-1]).tolist(), dtype=np.float64)
             out=self.predict(individual)
-            prob_target = out[0][label]
+            prob_target = out[0][target]
             counter=counter+1
             if counter==max_iter or subarray_length==self.ts_length:
-                print('No Counterfactual found')
+                print('Generator Swap: No Counterfactual found')
                 return None, None
         
         return X_example,np.argmax(out,axis=1)[0]
@@ -182,6 +185,8 @@ class NativeGuideCF():
         output=self.predict(individual)
         pred_treshold = 0.5
         target = np.argsort(output)[0][-2:-1][0] 
+        if target == label: 
+            target = np.argsort(output)[0][-2:-1][1] 
         query=query.reshape(-1)
         insample_cf=insample_cf.reshape(-1)
         generated_cf = dtw_barycenter_averaging([query, insample_cf], weights=np.array([(1-beta), beta]))
@@ -199,10 +204,12 @@ class NativeGuideCF():
 
             counter=counter+1
         if counter==max_iter:
-            print('No Counterfactual found')
+            print('Instance-Based: No Counterfactual found')
             return None, None
+        out=self.predict(generated_cf)
+        
     
-        return generated_cf, target
+        return generated_cf, np.argmax(out,axis=1)[0]
 
     def explain(self, x: np.ndarray,  y: int, method = 'NUN_CF', distance_measure='dtw',n_neighbors=1,max_iter=500)-> Tuple[np.array, int]:
         ''''

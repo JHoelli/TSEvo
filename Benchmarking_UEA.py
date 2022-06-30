@@ -25,12 +25,13 @@ from evaluation.COMTE import AtesCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 from models.ResNet import ResNetBaseline
+from evaluation.Wachter_CF import Wachter
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
 creator.create("Individual", list, fitness=creator.FitnessMin,window=0)
 
-run_on = ['Heartbeat','NATOPS','PenDigits','UWaveGestureLibrary']
+run_on = ['Heartbeat','NATOPS','CharacterTrajectories','UWaveGestureLibrary']
 draw_plot=False
 os_type= platform.system()
 os.environ["CUDA_VISIBLE_DEVICES"]=""
@@ -47,6 +48,8 @@ for dataset in run_on:
 
     
     X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(dataset)
+    X_train=np.nan_to_num(X_train, copy=True, nan=0.0)
+    X_test=np.nan_to_num(X_test, copy=True, nan=0.0)
     train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
     test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
 
@@ -115,33 +118,43 @@ for dataset in run_on:
             break
         input_ = torch.from_numpy(np.array(pop)).float()
         output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-        y_target = output.argmax()
+        #y_target = output.argmax()
         t=output.argmin()
-        print('Y_Target',y_target)
+        #print('Y_Target',y_target)
         mlmodel = model 
         counterfactuals = pop
         original = observation_01 
+        #print('W1')
         ynn.append(yNN(counterfactuals, mlmodel,train_x,5)[0][0])
+        #print('W2')
         ynn_timeseries.append(yNN_timeseries(counterfactuals, mlmodel,train_x,5)[0][0])
-        red.append(redundancy(original, counterfactuals, mlmodel)[0])
+        #print('W3')
+        #red.append(redundancy(original, counterfactuals, mlmodel)[0])
+        #print('W4')
         sal_01.append(d1_distance(observation_01,np.array(pop)))
+        #print('W5')
         sal_02.append(d2_distance(observation_01,np.array(pop)))
+        #print('W6')
         ys.append(np.argmax(pop[0].output))
+        #print('W7')
         cfs.append(pop)
-    
+        #print('W8')
         # Wachter et al . 
+        print('Wachter')
         item = item.reshape(1,sh[-2],sh[-1])
-        wachter_counterfactual, laberl_w=WachterEtAl.wachter_recourse(mlmodel, item, y_target)
+        #w=Wachter(model,(test_x,test_y))
+        #wachter_counterfactual, laberl_w=w.explain(item)
+        wachter_counterfactual, laberl_w=WachterEtAl.wachter_recourse(mlmodel, item)
         wachter_cf.append(wachter_counterfactual)
-        print('Wachter',wachter_cf)
+        #print('Wachter',wachter_cf)
         if not wachter_counterfactual is None:
             wachter_couterfactual=wachter_counterfactual.reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
             wachter_cf_s.append(wachter_counterfactual)
             print(wachter_counterfactual.shape)
             wachter_counterfactual =np.array([wachter_counterfactual])
-            ynn_wachter.append(yNN(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
-            ynn_timeseries_wachter.append(yNN_timeseries(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
-            red_wachter.append(redundancy(original, wachter_counterfactual, mlmodel,labels=np.array([y_target]))[0])
+            ynn_wachter.append(yNN(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([laberl_w]))[0][0])
+            ynn_timeseries_wachter.append(yNN_timeseries(wachter_counterfactual, mlmodel,train_x,5,labels=np.array([laberl_w]))[0][0])
+            #red_wachter.append(redundancy(original, wachter_counterfactual, mlmodel,labels=np.array([y_target]))[0])
             sal_01_wachter.append(d1_distance(observation_01,np.array(wachter_counterfactual)))
             sal_02_wachter.append(d2_distance(observation_01,np.array(wachter_counterfactual)))
             if laberl_w == np.argmax(label_01,axis=1):
@@ -149,10 +162,10 @@ for dataset in run_on:
         else: 
             print('No VAlid CF')
             not_valid_wachter=not_valid_wachter+1
-
+        print('Ates')
         item = item.reshape(1,sh[-2],sh[-1])
         explanation,lab_a  = ates.explain(item, method= 'opt') #ates.explain(item,to_maximize=t,savefig=False) 
-        print(explanation)
+        #print(explanation)
         if explanation is None:
             ates_cf.append(None)
         
@@ -167,11 +180,11 @@ for dataset in run_on:
             #print(modifies.shape)
             ates_couterfactual=modifies.reshape(np.array(pop).shape[0],np.array(pop).shape[1],np.array(pop).shape[2])
             #ynn_ates.append(yNN(modifies, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
-            ynn_timeseries_ates.append(yNN_timeseries(modifies, mlmodel,train_x,5,labels=np.array([y_target]))[0][0])
-            red_ates.append(redundancy(original, modifies, mlmodel,labels=np.array([y_target]))[0])
+            ynn_timeseries_ates.append(yNN_timeseries(modifies, mlmodel,train_x,5,labels=np.array([lab_a]))[0][0])
+            #red_ates.append(redundancy(original, modifies, mlmodel,labels=np.array([y_target]))[0])
             sal_01_ates.append(d1_distance(observation_01,np.array(modifies)))
             sal_02_ates.append(d2_distance(observation_01,np.array(modifies)))
-            if laberl_w == np.argmax(label_01,axis=1):
+            if lab_a == np.argmax(label_01,axis=1):
                 not_valid_ates=not_valid_ates+1
         else: 
             print('No VAlid CF')
@@ -217,8 +230,8 @@ for dataset in run_on:
     results['validity']=['Not implemented', 1-not_valid_wachter/20,1-not_valid_ates/20]
     results['ynn_timeseries']=[np.mean(ynn_timeseries),np.mean(ynn_timeseries_wachter),np.mean(ynn_timeseries_ates)]
     results['ynn_timeseries_std']=[np.std(ynn_timeseries),np.std(ynn_timeseries_wachter),np.std(ynn_timeseries_ates)]
-    results['red']=[np.mean(red),np.mean(red_wachter),np.mean(red_ates)]
-    results['red_std']=[np.std(red),np.std(red_wachter),np.std(red_ates)]
+    #results['red']=[np.mean(red),np.mean(red_wachter),np.mean(red_ates)]
+    #results['red_std']=[np.std(red),np.std(red_wachter),np.std(red_ates)]
     results['sparsity']=[np.mean(sal_01),np.mean(sal_01_wachter),np.mean(sal_01_ates)]
     results['sparsity_std']=[np.std(sal_01),np.std(sal_01_wachter),np.std(sal_01_ates)]
     results['dis']=[np.mean(sal_02),np.mean(sal_02_wachter),np.mean(sal_02_ates)]
