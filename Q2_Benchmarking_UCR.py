@@ -109,9 +109,16 @@ for dataset in run_on:
             pop=pickle.load(open( f'./Results/{mutation}/{dataset}/Counterfactuals_{i}.pkl', "rb" ))
         else:
             break
+        #TODO also in other sections !
+        input_ = torch.from_numpy(np.array(item).reshape(1,1,-1)).float()
+        output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+        y_target =np.argmax(output,axis=1)[0] #output.argmax()
+        print('Y_Target', y_target)
         #input_ = torch.from_numpy(np.array(pop)).float()
         #output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-        y_target =np.argmax(test_y[i]) #output.argmax()
+        #y_target =np.argmax(test_y[i]) #output.argmax()
+        
+        
         mlmodel = model 
         counterfactuals = pop
         original = observation_01

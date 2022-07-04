@@ -20,7 +20,7 @@ def calculate_total_ynn():
     data=[]
     method=[]
     value=[]
-    for file in ['Coffee','CBF','ElectricDevices','ECG5000','GunPoint','FordA']:
+    for file in ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']:
         if not file.endswith('csv') and not file.endswith('png'):
             pop=[]
             y=[]
@@ -36,30 +36,41 @@ def calculate_total_ynn():
             shape= np.array(cf).shape
             #print(shape)
             if shape[-2]==1:
-                train_x,train_y,_,_=load_UCR_dataset(file)
+                train_x,train_y,_,_=UCR_UEA_datasets().load_dataset(file)
             else: 
-                train_x,train_y,_,_=load_UEA_dataset(file)
+                train_x,train_y,_,_=UCR_UEA_datasets().load_dataset(file)
                 pass
+            train_x=np.nan_to_num(train_x, copy=True, nan=0.0)
+            #X_test=np.nan_to_num(test_x, copy=True, nan=0.0)
+            model = ResNetBaseline(in_channels=shape[-2], num_pred_classes=len(np.unique(train_y)))
+            model.load_state_dict(torch.load(f'./models/{file}/ResNet'))
+            model.eval()
             
             wachter=pickle.load(open(f'./Results/Benchmarking/{file}/Wachter_cf.pkl','rb'))
             n=[]
             for a in wachter:
-                    if not a is None:
-                        n.append(a)
-                    else:
-                        print('None')
+                if not a is None:
+                    n.append(a)
+                else:
+                    print('None')
             wachter=n
+            if len(wachter) != 0:
+                          
             
-            model = ResNetBaseline(in_channels=shape[-2], num_pred_classes=len(np.unique(train_y)))
-            model.load_state_dict(torch.load(f'./models/{file}/ResNet'))
-            model.eval()
-            input_ = torch.from_numpy(np.array(wachter)).float().reshape(-1,shape[-2],shape[-1])
-            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-            y_wachter = np.argmax(output,axis=1)
-            
+                input_ = torch.from_numpy(np.array(wachter)).float().reshape(-1,shape[-2],shape[-1])
+                output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+                y_wachter = np.argmax(output,axis=1)
+                
+                data.append(file)
+                if len(np.array(wachter).shape)==2:
+                    cfg=np.array(wachter).reshape(1,shape[-2],shape[-1])
+                value.append(yNN_timeseries(wachter, model,train_x,5,labels=y_wachter))
+            else: 
+                    value.append(0)
+            method.append('wachter')
+            print('stert cfg')
             if shape[-2]==1:
-                cfg=pickle.load(open(f'./Results/Benchmarking/{file}/cfg_cf.pkl','rb'))
-                #print(len(cfg))
+                cfg=pickle.load(open(f'./Results/Benchmarking/{file}/cfg_cf.pkl','rb'))                
                 n=[]
                 for a in cfg:
                     if not a is None:
@@ -67,49 +78,114 @@ def calculate_total_ynn():
                     else:
                         print('None')
                 cfg=n
+                if len(cfg) != 0:    
+                    
+                    input_ = torch.from_numpy(np.array(cfg,dtype=np.float32)).float().reshape(-1,shape[-2],shape[-1])
+                    output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+                    cfg_y = np.argmax(output,axis=1)
+                    #method.append('cfg')
+                
+                    if len(np.array(cfg).shape)==2:
+                        cfg=np.array(cfg).reshape(1,shape[-2],shape[-1])
+                   
+                    value.append(yNN_timeseries(cfg, model,train_x,5,labels=cfg_y))
+                else: 
+                    value.append(0)
+                method.append('cfg')
+
                 ib=pickle.load(open(f'./Results/Benchmarking/{file}/ib_cf.pkl','rb'))
                 n=[]
                 for a in ib:
                     if not a is None:
-                        n.append(a)
-                print(np.array(pop).shape)
+                         n.append(a)
                 ib=n
-                #print(len(cfg))
-                input_ = torch.from_numpy(np.array(cfg,dtype=np.float32)).float().reshape(-1,shape[-2],shape[-1])
-                output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-                cfg_y = np.argmax(output,axis=1)
-                input_ = torch.from_numpy(np.array(ib)).float().reshape(-1,shape[-2],shape[-1])
-                output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-                ib_y = np.argmax(output,axis=1)
+                if len(ib) != 0:
+                    
+
+                    input_ = torch.from_numpy(np.array(ib)).float().reshape(-1,shape[-2],shape[-1])
+                    output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+                    ib_y = np.argmax(output,axis=1)
+                    #method.append('ib')
+                    if len(np.array(ib).shape)==2:
+                        ib=np.array(ib).reshape(1,shape[-2],shape[-1])
+                    else:
+                        ib=np.array(ib).reshape(-1,shape[-2],shape[-1])
+
+                    value.append(yNN_timeseries(ib, model,train_x,5,labels=ib_y))
+                    #print(len(cfg))
+                else: 
+                    value.append(0)
                 data.append(file)
                 data.append(file)
-                method.append('cfg')
                 method.append('ib')
-                print(np.array(cfg).shape)
-                if len(np.array(cfg).shape)==2:
-                    cfg=np.array(cfg).reshape(1,shape[-2],shape[-1])
-                if len(np.array(ib).shape)==2:
-                    ib=np.array(ib).reshape(1,shape[-2],shape[-1])
-                else:
-                    ib=np.array(ib).reshape(-11,shape[-2],shape[-1])
-                value.append(yNN_timeseries(cfg, model,train_x,5,labels=cfg_y))
-                value.append(yNN_timeseries(ib, model,train_x,5,labels=ib_y))
+                value.append(0)
+                data.append(file)
+                method.append('ates')
+                
+                
+            else:
+                ates=pickle.load(open(f'./Results/Benchmarking/{file}/ates_cf.pkl','rb'))
+                n=[]
+                for a in ates:
+                    if not a is None:
+                        n.append(a)
+                ates=n
+                if len(ates) != 0:
+                    input_ = torch.from_numpy(np.array(ates)).float().reshape(-1,shape[-2],shape[-1])
+                    output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+                    ates_y = np.argmax(output,axis=1)
+                    #method.append('ates')
+                    if len(np.array(ates).shape)==2:
+                        ates=np.array(ates).reshape(1,shape[-2],shape[-1])
+                    else:
+                        ates=np.array(ates).reshape(-1,shape[-2],shape[-1])
+
+                    value.append(yNN_timeseries(ates, model,train_x,5,labels=ates_y))
+                    #print(len(cfg))
+                else: 
+                    value.append(0)
+                data.append(file)
+                method.append('ates')
+
+                value.append(0)
+                value.append(0)
+                data.append(file)
+                data.append(file)
+                method.append('ib')
+                method.append('cfg')
+                #PUT ATES IN HERE
+                pass
 
             data.append(file)
-            data.append(file)
+            
             method.append('TSEvo')
-            method.append('wachter')
+            
             value.append(yNN_timeseries(pop, model,train_x,5,labels=y))
-            if len(np.array(wachter).shape)==2:
-                    cfg=np.array(wachter).reshape(1,shape[-2],shape[-1])
-            value.append(yNN_timeseries(wachter, model,train_x,5,labels=y_wachter))
+            
             
     results=pd.DataFrame([])
+    print(len(data))
+    print(len(method))
+    print(len(value))
     results['Dataset']=data
     results['Method']=method
     results['yNN']=value
     results.to_csv('./Results/Benchmarking/yNN_base_UCR.csv')
-            
+
+def yNN_to_latex():
+    data= pd.read_csv('./Results/Benchmarking/yNN_base_UCR.csv')
+    string=''
+    for dataset in ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']:
+        d=data[data['Dataset']==dataset]
+        print(type(d[d['Method']=='TSEvo']['yNN'].values[0]))
+        evo= round(float(d[d['Method']=='TSEvo']['yNN'].values[0]),4)
+        w=round(float(d[d['Method']=='wachter']['yNN'].values[0]),4)
+        print(dataset)
+        ins=round(float(d[d['Method']=='ib']['yNN'].values[0]),4)
+        grad=round(float(d[d['Method']=='cfg']['yNN'].values[0]),4)
+        ates=round(float(d[d['Method']=='ates']['yNN'].values[0]),4)
+        string+= f' {dataset}& ${evo}$ & ${w}$ & ${ins}$ & ${grad}$ & ${ates}$ \\\\ \hline'
+    print(string)
 
 def calculate_total_dis():
     data=[]
@@ -120,7 +196,7 @@ def calculate_total_dis():
     value_std2=[]
     method2=[]
     value2=[]
-    for file in os.listdir('./Results/Benchmarking'):
+    for file in ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']: #os.listdir('./Results/Benchmarking'):
         if not file.endswith('csv') and not file.endswith('png'):
             d1= pickle.load(open(f'./Results/Benchmarking/{file}/Dis1.pkl','rb'))
             d2= pickle.load(open(f'./Results/Benchmarking/{file}/Dis2.pkl','rb'))
@@ -236,7 +312,7 @@ def dis_to_latex_t():
 def make_table():
     #TODO still to do 
     dataFrame=pd.DataFrame([])
-    for data in os.listdir('./Results/Benchmarking'):
+    for data in ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']:
         if not data.endswith('.png'):
             bench=pd.read_csv(f'./Results/Benchmarking/{data}/BenchmarkMetrics.csv')
             line=data 
@@ -250,7 +326,7 @@ def make_table_split():
     #TODO still to do 
     dataFrame=pd.DataFrame([])
     print('yNN')
-    for data in os.listdir('./Results/Benchmarking'):
+    for data in ['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']:
         if not data.endswith('.png'):
             bench=pd.read_csv(f'./Results/Benchmarking/{data}/BenchmarkMetrics.csv')
             line_a=data 
@@ -259,7 +335,7 @@ def make_table_split():
             line_a=line_a+'\\'+'\\'
             print(line_a)
 
-def build_figure(k=3):
+def build_figure(k=0):
     #TODO check if item is none firsr
     j=1
     #k=0
@@ -295,38 +371,45 @@ def build_figure(k=3):
         try:
             wa = pickle.load(open(f'./Results/Benchmarking/{dataset}/Wachter_cf.pkl','rb'))[0]
             if wa is None:
-                wa=np.zeros_like(original)
+                #wa=np.zeros_like(original)
+                wa=None
         except:
             print('Wachter is None')
             wa=np.zeros_like(original)
         
-        if mi>np.min(wa.reshape(-1),axis=0):
-            mi=np.min(wa.reshape(-1),axis=0)
-        if ma<np.max(wa.reshape(-1),axis=0):
-            ma=np.max(wa.reshape(-1),axis=0)
+        if wa is not None:
+            if mi>np.min(wa.reshape(-1),axis=0):
+                mi=np.min(wa.reshape(-1),axis=0)
+            if ma<np.max(wa.reshape(-1),axis=0):
+                ma=np.max(wa.reshape(-1),axis=0)
         try:
             cfg= pickle.load(open(f'./Results/Benchmarking/{dataset}/cfg_cf.pkl','rb'))[0]
             if cfg is None:
-                cfg=np.zeros_like(original)
+                cfg=None
+                #cfg=np.zeros_like(original)
                 print('CFG is None')
 
         except:
             cfg=np.zeros_like(original)
-        if mi>np.min(cfg.reshape(-1),axis=0):
-            mi=np.min(cfg.reshape(-1))
-        if ma<np.max(cfg.reshape(-1),axis=0):
-            ma=np.max(cfg.reshape(-1))
+        if cfg is not None:
+            if mi>np.min(cfg.reshape(-1),axis=0):
+                mi=np.min(cfg.reshape(-1))
+            if ma<np.max(cfg.reshape(-1),axis=0):
+                ma=np.max(cfg.reshape(-1))
         try:
             ib = pickle.load(open(f'./Results/Benchmarking/{dataset}/ib_cf.pkl','rb'))[0]
             if ib is None:
-                ib=np.zeros_like(original)
+                ib=None
+                #ib=np.zeros_like(original)
         except:
             print('IB is None')
             ib=np.zeros_like(original)
-        if mi> np.min(ib.reshape(-1),axis=0):
-            mi=np.min(ib.reshape(-1),axis=0)
-        if ma<np.max(ib.reshape(-1),axis=0):
-            ma=np.max(ib.reshape(-1),axis=0)
+        
+        if ib is not None:
+            if mi> np.min(ib.reshape(-1),axis=0):
+                mi=np.min(ib.reshape(-1),axis=0)
+            if ma<np.max(ib.reshape(-1),axis=0):
+                ma=np.max(ib.reshape(-1),axis=0)
         #print('Test_Y ',test_y)
         #print('Label',label)
         #print(test_y[test_y != label])
@@ -385,49 +468,72 @@ def build_figure(k=3):
         p.set_ylabel("TSEvo")
         #ax021.set(xlabel='TSEvo')
         plt.legend(loc='upper right')
-        
-        input_ = torch.from_numpy(wa).float().reshape(1,-1,l)
-        output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-        idx = output.argmax()
+        if wa is not None: 
+            input_ = torch.from_numpy(wa).float().reshape(1,-1,l)
+            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+            idx = output.argmax()
+        else:
+            idx= 'No CF!'
         
         ax031 = plt.subplot(6,1,4)
         ax032 = ax031.twinx()
         ax031.set_ylim(mi,ma)
         ax032.set_ylim(mi,ma)
         if highlight_differences:
-            sal_02= np.abs(original.reshape(-1)-np.array(wa).reshape(-1)).reshape(1,-1)
+            if wa is not None:
+                sal_02= np.abs(original.reshape(-1)-np.array(wa).reshape(-1)).reshape(1,-1)
+            else: 
+                sal_02=np.zeros_like(original.reshape(1,-1))
             sns.heatmap(sal_02, fmt="g", cmap='viridis', cbar=False, ax=ax031, yticklabels=False)
-        p=sns.lineplot(x=range(l), y=wa.flatten(), label=str(idx), color='white', ax=ax032,legend=False)
-        p.set_ylabel("Wachter")
+        if wa is not None:
+            wa=wa.flatten()
+        p=sns.lineplot(x=range(l), y=wa, label=str(idx), color='white', ax=ax032,legend=False)
+        p.set_ylabel("W-CF")
         plt.legend(loc='upper right')
         
-        input_ = torch.from_numpy(cfg).float().reshape(1,-1,l)
-        output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-        idx = output.argmax()
+        if cfg is not None:
+            input_ = torch.from_numpy(cfg).float().reshape(1,-1,l)
+            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+            idx = output.argmax()
+        else: 
+             idx= 'No CF!'
         
         ax041 = plt.subplot(6,1,5)
         ax042 = ax041.twinx()
         ax041.set_ylim(mi,ma)
         ax042.set_ylim(mi,ma)
         if highlight_differences:
-            sal_02= np.abs(original.reshape(-1)-np.array(cfg).reshape(-1)).reshape(1,-1)
+            if cfg is not None:
+                sal_02= np.abs(original.reshape(-1)-np.array(cfg).reshape(-1)).reshape(1,-1)
+            else:
+                sal_02=np.zeros_like(original.reshape(1,-1))
             sns.heatmap(sal_02, fmt="g", cmap='viridis', cbar=False, ax=ax041, yticklabels=False)
-        p=sns.lineplot(x=range(l), y=cfg.flatten(), label= str(idx), color='white', ax=ax042,legend=False)
+        if cfg is not None:
+            cfg=cfg.flatten()
+        p=sns.lineplot(x=range(l), y=cfg, label= str(idx), color='white', ax=ax042,legend=False)
         p.set_ylabel("Nun-Cf")
         plt.legend(loc='upper right')
         
-        input_ = torch.from_numpy(ib).float().reshape(1,-1,l)
-        output = torch.nn.functional.softmax(model(input_)).detach().numpy()
-        idx = output.argmax()
+        if ib is not None: 
+            input_ = torch.from_numpy(ib).float().reshape(1,-1,l)
+            output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+            idx = output.argmax()
+        else: 
+             idx= 'No CF!'
         
         ax051 = plt.subplot(6,1,6)
         ax052 = ax051.twinx()
         ax051.set_ylim(mi,ma)
         ax052.set_ylim(mi,ma)
         if highlight_differences:
-            sal_02= np.abs(original.reshape(-1)-np.array(ib).reshape(-1)).reshape(1,-1)
+            if ib is not None:
+                sal_02= np.abs(original.reshape(-1)-np.array(ib).reshape(-1)).reshape(1,-1)
+            else: 
+                sal_02=np.zeros_like(original.reshape(1,-1))
             sns.heatmap(sal_02, fmt="g", cmap='viridis', cbar=False, ax=ax051, yticklabels=False)
-        p=sns.lineplot(x=range(l), y=ib.flatten(), label=str(idx), color='white', ax=ax052,legend=False)
+        if ib is not None:
+            ib=ib.flatten()
+        p=sns.lineplot(x=range(l), y=ib, label=str(idx), color='white', ax=ax052,legend=False)
         p.set_ylabel("NUN-Grad") 
         plt.legend(loc='upper right')
         
@@ -514,11 +620,11 @@ def plot_dis(k):
     df_plot['method']=meth
     print(np.unique(df_plot2['dataset']))
     df_plot2['method']=df_plot2['method'].str.replace('our','TsEvo')
-    df_plot2['method']=df_plot2['method'].str.replace('wachter','Wachter')
+    df_plot2['method']=df_plot2['method'].str.replace('wachter','W-CF')
     df_plot2['method']=df_plot2['method'].str.replace('ib','NUN-CF')
     df_plot2['method']=df_plot2['method'].str.replace('cfg','NUN-Grad')
     df_plot['method']=df_plot['method'].str.replace('our','TsEvo')
-    df_plot['method']=df_plot['method'].str.replace('wachter','Wachter')
+    df_plot['method']=df_plot['method'].str.replace('wachter','W-CF')
     df_plot['method']=df_plot['method'].str.replace('ib','NUN-CF')
     df_plot['method']=df_plot['method'].str.replace('cfg','NUN-Grad')
     #print('finished')
@@ -607,7 +713,7 @@ def validity():
     sum_ng=0
     string=''
 
-    for a in['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA']:#,'Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']: #os.listdir('./Results/Benchmarking'):
+    for a in['GunPoint','Coffee','CBF','ElectricDevices','ECG5000','FordA','CharacterTrajectories','Heartbeat', 'UWaveGestureLibrary','NATOPS']:#,'Heartbeat','PenDigits', 'UWaveGestureLibrary','NATOPS']: #os.listdir('./Results/Benchmarking'):
         if os.path.isdir(f'./Results/Benchmarking/{a}'):
             print(a)
             counter += counter
@@ -618,9 +724,36 @@ def validity():
 
             sum_out=data[data['method']== 'TS_Evo']['validity'].values[0]
             sum_wachter=data[data['method']== 'Wachter']['validity'].values[0]
-            sum_cfg=data[data['method']== 'NG_DBN']['validity'].values[0]
-            sum_ng=data[data['method']== 'NG_GradCam']['validity'].values[0]
-            string +=f' {a} & ${sum_out}$ & ${sum_wachter}$ & ${sum_cfg}$ & ${sum_ng}$ \\\\ \hline'
+            try:
+                sum_cfg=data[data['method']== 'NG_DBN']['validity'].values[0]
+                sum_ng=data[data['method']== 'NG_GradCam']['validity'].values[0]
+                sum_ates='-'
+            except:
+                not_valid=0
+                X_train,train_y,X_test,test_y=UCR_UEA_datasets().load_dataset(a)
+                train_x=X_train.reshape(-1,X_train.shape[-1],X_train.shape[-2])
+                test_x=X_test.reshape(-1,X_train.shape[-1],X_train.shape[-2])
+                enc1=pickle.load(open(f'./models/{a}/OneHotEncoder.pkl','rb'))
+                test_y=enc1.transform(test_y.reshape(-1,1))
+                n_classes = test_y.shape[1]
+                model = ResNetBaseline(in_channels=train_x.shape[-2], num_pred_classes=n_classes)
+                model.load_state_dict(torch.load(f'./models/{a}/ResNet'))
+                model.eval()
+                for i, item in enumerate(test_x):
+                    pop=pickle.load(open( f'./Results/mutate_both/{a}/Counterfactuals_{i}.pkl', "rb" ))
+                    input_ = torch.from_numpy(np.array(item).reshape(1,test_x.shape[-2],test_x.shape[-1])).float()
+                    output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+                    y_target =np.argmax(output,axis=1)[0]
+                    counterfactuals = pop 
+                    if y_target == np.argmax(counterfactuals[0].output):
+                        not_valid=not_valid+1
+                    if i==19:
+                        break
+                sum_out= 1-not_valid/20#data[data['method']== 'TS_Evo']['validity'].values[0]
+                sum_ates=data[data['method']== 'Ates']['validity'].values[0]
+                sum_cfg='-'
+                sum_ng='-'
+            string +=f' {a} & ${sum_out}$ & ${sum_wachter}$ & ${sum_cfg}$ & ${sum_ng}$ &${sum_ates}$ \\\\ \hline'
             #print(f'Our {sum_out/counter} , Wachter {sum_wachter/counter}, NG_DBM {sum_cfg/counter}, NG_GradCAm {sum_ng/counter}' )
             #TODO Multivariate is still TODO 
             #sum_ates+=data[data['methods']== 'TS_Evo']['validity'].values[0]
@@ -629,12 +762,16 @@ def validity():
     pass
 
 if __name__=='__main__':
-    validity()
-    #build_figure()
+    #calculate_total_ynn()
+    #calculate_total_dis()
+    #calculate_total_ynn()
+    #TODO Rather use Old Calc
+    #yNN_to_latex()
+    #validity()
+    build_figure(0)
     #make_table_split()
     #dis_to_latex_2_Tables()
     #plot_dis(str(1))
-    #calculate_total_ynn()
+   
     #calculate_total_dis()
     #dis_to_latex_t()
-    #calculate_validity()

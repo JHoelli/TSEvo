@@ -192,10 +192,14 @@ class NativeGuideCF():
         individual = np.array(query.tolist(), dtype=np.float64)
 
         output=self.predict(individual)
+
         pred_treshold = 0.5
+        
         target = np.argsort(output)[0][-2:-1][0] 
+        print('Target', target)
         if target == label: 
             target = np.argsort(output)[0][-2:-1][1] 
+        print('query',self.predict(insample_cf))
         query=query.reshape(-1)
         insample_cf=insample_cf.reshape(-1)
         generated_cf = dtw_barycenter_averaging([query, insample_cf], weights=np.array([(1-beta), beta]))
@@ -203,13 +207,16 @@ class NativeGuideCF():
         individual = np.array(generated_cf.tolist(), dtype=np.float64)
         prob_target=self.predict(individual)[0][target]
         counter=0
-
+        print(prob_target)
         while prob_target < pred_treshold and counter<max_iter:
             beta +=0.01 
+            #print('ß', beta)
             generated_cf= dtw_barycenter_averaging([query, insample_cf], weights=np.array([(1-beta), beta]))
             generated_cf = generated_cf.reshape(1,1,-1)
             individual = np.array(generated_cf.tolist(), dtype=np.float64)
             prob_target=self.predict(individual)[0][target]
+            #print('are items identical',np.count_nonzero(generated_cf.reshape(-1)-query.reshape(-1)))
+            # print(prob_target)
 
             counter=counter+1
         if counter==max_iter:

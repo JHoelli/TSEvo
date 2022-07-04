@@ -121,9 +121,14 @@ for dataset in run_on:
         #y_target = output.argmax()
         t=output.argmin()
         #print('Y_Target',y_target)
+        input_ = torch.from_numpy(np.array(item).reshape(1,sh[-2],sh[-1])).float()
+        output = torch.nn.functional.softmax(model(input_)).detach().numpy()
+        y_target =np.argmax(output,axis=1)[0]
         mlmodel = model 
         counterfactuals = pop
         original = observation_01 
+        if y_target == np.argmax(counterfactuals[0].output):
+            not_valid=not_valid+1
         #print('W1')
         ynn.append(yNN(counterfactuals, mlmodel,train_x,5)[0][0])
         #print('W2')
