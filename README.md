@@ -46,3 +46,4 @@ UEA: `Q2_python Benchmarking_UEA.py`
 ## Refactor Tables in Visualizations from Paper
 Compare Mutation: `python Q1_Eval.py`
 Baselines: `python Q2_CalcBaselineDist.py`
+`python Q2_Eval.py`
