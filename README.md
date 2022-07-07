@@ -1,8 +1,10 @@
 # TSEvo: Counterfactuals for Time Series Classification 
 # Installation
+To use TSEvo isntall:
 ```
 pip install .
 ```
+For rerunning the experiments, installing the requirements.txt is necessary.
 
 # Usage
 Entry point to TSEvo is ```CounterfactualExplanation.py```. 
