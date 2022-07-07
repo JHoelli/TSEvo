@@ -23,11 +23,9 @@ import pickle
 from evaluation.Plots import plot_CF, plot_CF_Original, plot_CF_Original_Closest
 from tslearn.datasets import UCR_UEA_datasets
 import warnings
-from evaluation.Instance_BasedCF_NativeGuide import NativeGuidCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 from tslearn.datasets import UCR_UEA_datasets
-from evaluation.Wachter_CF import Wachter
 from evaluation.Nun_CF import NativeGuideCF
 
 warnings.filterwarnings('ignore')

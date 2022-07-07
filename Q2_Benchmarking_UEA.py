@@ -16,7 +16,6 @@ import numpy as np
 from TSEvo.CounterfactualExplanation import Explanation
 from evaluation import WachterEtAl
 import pickle
-from evaluation.AtesEtAl import OptimizedSearch
 from tslearn.datasets import UCR_UEA_datasets
 import warnings
 from evaluation.Instance_BasedCF_NativeGuide import NativeGuidCF
@@ -25,7 +24,6 @@ from evaluation.COMTE import AtesCF
 from deap import creator, base, algorithms, tools
 from deap.benchmarks.tools import hypervolume, diversity, convergence
 from models.ResNet import ResNetBaseline
-from evaluation.Wachter_CF import Wachter
 warnings.filterwarnings('ignore')
 warnings.simplefilter('ignore')
 creator.create("FitnessMin", base.Fitness, weights=(-1.0, -1.0, -1.0, -1.0))
