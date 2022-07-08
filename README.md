@@ -34,16 +34,16 @@ For more examples and available plots, refer to the jupyter notebooks.
 
 
 # Rerun Evaluation
-Download UCR Dataset from : https://www.cs.ucr.edu/%7Eeamonn/time_series_data_2018/ into ./data and unzip.
+
 ## Rerun Training Classification Model
-UCR: `python Train_ResNet_UCR.py`
-UEA: `python Train_ResNet_UEA.py`
+`python Q0_Train_ResNet_UCR_UEA.py`
 ## Rerun Counterfactual Generation
-UCR: `python Run_UCR.py`
-UEA: `python Run_UEA.py`
+`python Q1_Run_UCR_UEA.py`
+
 ## Rerun Baselines
-UCR: `python Benchmarking_UCR.py`
-UEA: `python Benchmarking_UEA.py`
+UCR: `Q2_python Benchmarking_UCR.py`
+UEA: `Q2_python Benchmarking_UEA.py`
 ## Refactor Tables in Visualizations from Paper
-Compare Mutation: `python PaperEval.py`
-Baselines: `python Paper_Vis_Baslines.py`
+Compare Mutation: `python Q1_Eval.py`
+Baselines: `python Q2_CalcBaselineDist.py`
+`python Q2_Eval.py`
