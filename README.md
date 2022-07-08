@@ -30,7 +30,6 @@ For more examples and available plots, refer to the jupyter notebooks.
 - For Multivariate Data `Multidimensional_Evo.ipynb`
 - For Univariate Data `Univariate_Evo.ipynb`
 - Tensorflow: `GunPoint_tensorflow.ipynb`
-- Benchmarking: `Benchmarking.ipynb`
 
 
 # Rerun Evaluation
@@ -45,5 +44,7 @@ UCR: `Q2_python Benchmarking_UCR.py`
 UEA: `Q2_python Benchmarking_UEA.py`
 ## Refactor Tables in Visualizations from Paper
 Compare Mutation: `python Q1_Eval.py`
+
 Baselines: `python Q2_CalcBaselineDist.py`
+
 `python Q2_Eval.py`
