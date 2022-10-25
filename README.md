@@ -1,6 +1,7 @@
 # TSEvo: Counterfactuals for Time Series Classification 
+This repository contains the code to out paper "TSEvo: Counterfactuals for Time Series Classification" accepted at ICMLA '22. 
 # Installation
-To use TSEvo isntall:
+To use TSEvo install:
 ```
 pip install .
 ```
@@ -33,7 +34,7 @@ For more examples and available plots, refer to the jupyter notebooks.
 
 
 # Rerun Evaluation
-
+To replicate the results from the paper, please follow the steps below.
 ## Rerun Training Classification Model
 `python Q0_Train_ResNet_UCR_UEA.py`
 ## Rerun Counterfactual Generation
