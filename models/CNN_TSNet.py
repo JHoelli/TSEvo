@@ -12,7 +12,6 @@ import random
 from sklearn import tree
 from sklearn.model_selection import cross_val_score
 from pymop import Problem
-import optuna
 #import UCRDataset
 
 class UCRDataset(Dataset):
