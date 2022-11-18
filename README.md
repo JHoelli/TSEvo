@@ -4,6 +4,10 @@ This repository contains the code to out paper "TSEvo: Counterfactuals for Time 
 With the increasing predominance of deep learning methods on time series classification, interpretability becomes essential, especially in high-stake scenarios. Although many approaches to interpretability have been explored for images and tabular data, time series data has been mostly neglected. We
 approach the problem of interpretability by proposing TSEvo, a model-agnostic multiobjective evolutionary approach to time series counterfactuals incorporating a variety of time series transformation mechanisms to cope with different types and structures of time series. 
 
+<p align="center">
+    <img src="./docs/Results/pic.png" alt="Algorithm Results" height="200"/>
+</p>
+
 # Installation
 To use TSEvo install:
 ```
