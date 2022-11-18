@@ -23,7 +23,7 @@ REQUIRES_PYTHON = ">=3.6.0"
 # Package requirements.
 base_packages = [
     "h5py", # todo add version
-    "joblib==1.0.1",
+    "joblib==1.2.0",
     "kaggle==1.5.12",
     "lime==0.2.0.1",
     "Markdown==3.3.4",
