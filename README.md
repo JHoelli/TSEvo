@@ -59,3 +59,11 @@ Baselines: `python Q2_CalcBaselineDist.py`
 `python Q2_Eval.py`
 
 # Citation
+```
+@inproceedings{hoelligTSEvo2022,
+  title = {TSEvo: Evolutionary Counterfactual Explanations for Time Series Classification},
+  booktitle = {{{IEEE Conference}} on {{Machine Learning}} and Applications} ({{ICMLA}})},
+  author = {Höllig, Jacqueline and Kulbach, Cedric and Thoma, Steffen},
+  date = {2022},
+}
+```
