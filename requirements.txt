@@ -77,7 +77,6 @@ nest-asyncio==1.5.4
 numba==0.53.1
 numexpr==2.8.1
 numpy>=1.22
-oauthlib==3.2.0
 opencv-python==4.5.5.62
 opt-einsum==3.3.0
 optuna==2.10.0
