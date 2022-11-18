@@ -32,7 +32,6 @@ base_packages = [
     "partd==1.2.0",
     "pytz==2021.3",
     "scikit-learn==0.24.2",
-    "shap==0.39.0",
     "sktime==0.8.0",
     "tensorflow",#TODO used to be 2.6.0.
     "keras",#TODO used to be 2.6
@@ -48,7 +47,9 @@ base_packages = [
     "opencv-python",
     "captum",
     "pyts",
-    "deprecated"
+    "deprecated",
+    "pymop",
+    "deap"
     
 ]
 

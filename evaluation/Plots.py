@@ -103,13 +103,16 @@ def plot_CF_Original_Closest(pop,original,original_y,timeline_max, timeline_max_
     ax021 = plt.subplot(312)
     ax022 = ax021.twinx()
     if highlight_differences:
-        sal_02= np.abs(timeline_max.reshape(-1)-np.array(pop)[0][0].reshape(-1)).reshape(1,-1)
+        sal_02= np.abs(original.reshape(-1)-timeline_max.reshape(-1)).reshape(1,-1)
         sns.heatmap(sal_02, fmt="g", cmap='viridis', cbar=False, ax=ax021, yticklabels=False)
     sns.lineplot(x=range(l), y=timeline_max.flatten(), label='Observation class ' + str(timeline_max_y), color='white', ax=ax022)
 
     ax031 = plt.subplot(313)
     ax032 = ax031.twinx()
-    sns.lineplot(x=range(l), y=np.array(pop)[0][0].flatten(), label='counterfactual class ' + str(np.argmax(pop[0].output)), color='black', ax=ax032)
+    if highlight_differences:
+        sal_01= np.abs(original.reshape(-1)-np.array(pop)[0][0].reshape(-1)).reshape(1,-1)
+        sns.heatmap(sal_01, fmt="g", cmap='viridis', cbar=False, ax=ax031, yticklabels=False)
+    sns.lineplot(x=range(l), y=np.array(pop)[0][0].flatten(), label='counterfactual class ' + str(np.argmax(pop[0].output)), color='white', ax=ax032)
     if path == None: 
         plt.show()
     else: 
