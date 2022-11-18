@@ -1,9 +1,11 @@
 # TSEvo: Counterfactuals for Time Series Classification 
 This repository contains the code to out paper "TSEvo: Counterfactuals for Time Series Classification" accepted at ICMLA '22.
 
-With the increasing predominance of deep learning methods on time series classification, interpretability becomes essential, especially in high-stake scenarios. Although many approaches to interpretability have been explored for images and tabular data, time series data has been mostly neglected. We approach the problem of interpretability by proposing TSEvo, a model-agnostic multiobjective evolutionary approach to time series counterfactuals incorporating a variety of time series transformation mechanisms to cope with different types and structures of time series.
+With the increasing predominance of deep learning methods on time series classification, interpretability becomes essential, especially in high-stake scenarios. Although many approaches to interpretability have been explored for images and tabular data, time series data has been mostly neglected. We
+approach the problem of interpretability by proposing TSEvo, a model-agnostic multiobjective evolutionary approach to time series counterfactuals incorporating a variety of time series transformation mechanisms to cope with different types and structures of time series. 
+
 # Installation
-To use TSEvo isntall:
+To use TSEvo install:
 ```
 pip install .
 ```
@@ -36,7 +38,7 @@ For more examples and available plots, refer to the jupyter notebooks.
 
 
 # Rerun Evaluation
-
+To replicate the results from the paper, please follow the steps below.
 ## Rerun Training Classification Model
 `python Q0_Train_ResNet_UCR_UEA.py`
 ## Rerun Counterfactual Generation
