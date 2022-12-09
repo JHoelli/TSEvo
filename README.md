@@ -9,7 +9,7 @@ approach the problem of interpretability by proposing TSEvo, a model-agnostic mu
 </p>
 
 TSEvo will also be part of the soon-to-come release v0.0.14 of <a href="https://github.com/fzi-forschungszentrum-informatik/TSInterpret">TSInterpret</a>.
-TSInterpret is a Python library to faciliate the usage of interpretability methods for times series classification and includes the counterfatuals methods unsed in the benchark here as well as gradient based and perturbation based methods.
+TSInterpret is a Python library to faciliate the usage of interpretability methods for times series classification and includes the counterfatuals methods used in the benchmark here as well as gradient based and perturbation based methods.
 
 # Installation
 To use TSEvo install:
